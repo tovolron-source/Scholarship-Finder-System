@@ -10,18 +10,67 @@ import { Card, CardContent } from '../components/ui/card';
 export function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would make an API call
-    toast.success('Logged in successfully! 👋', {
-      description: 'Welcome back! You can now access your dashboard.',
-    });
-    navigate('/search');
+    
+    // Validation
+    if (!formData.email || !formData.password) {
+      toast.error('Email and password are required');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error('Please enter a valid email');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error('Login failed', {
+          description: data.message || 'Invalid email or password',
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Store token in localStorage
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      toast.success('Logged in successfully! 👋', {
+        description: 'Welcome back! Redirecting to dashboard...',
+      });
+      
+      // Navigate to search after 1.5 seconds
+      setTimeout(() => navigate('/search'), 1500);
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Login failed', {
+        description: 'Could not connect to server. Make sure backend is running on http://localhost:5000',
+      });
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -132,9 +181,10 @@ export function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white h-11"
+                className="w-full bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white h-11 disabled:opacity-50"
+                disabled={isLoading}
               >
-                Sign In
+                {isLoading ? 'Signing In...' : 'Sign In'}
               </Button>
 
               <div className="relative my-6">

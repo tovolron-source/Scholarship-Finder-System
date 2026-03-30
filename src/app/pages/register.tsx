@@ -13,6 +13,7 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -30,13 +31,82 @@ export function RegisterPage() {
 
   const passwordStrength = passwordRequirements.filter(req => req.met).length;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would make an API call
-    toast.success('Account created successfully! 🎉', {
-      description: `Welcome ${formData.fullName}! Your account has been created.`,
-    });
-    navigate('/profile');
+    
+    // Validation
+    if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
+      toast.error('All fields are required');
+      return;
+    }
+
+    if (passwordStrength < 4) {
+      toast.error('Password does not meet requirements');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (!formData.agreeToTerms) {
+      toast.error('Please agree to the terms and conditions');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('❌ Registration error:', data.message);
+        toast.error('Registration failed', {
+          description: data.message || 'Something went wrong',
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('✅ Registration successful for:', formData.email);
+      toast.success('Account created successfully! 🎉', {
+        description: `Welcome ${formData.fullName}! Redirecting to login...`,
+      });
+      
+      // Clear form
+      setFormData({
+        fullName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        agreeToTerms: false
+      });
+      
+      setIsLoading(false);
+      
+      // Navigate to login after 2 seconds
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (error) {
+      console.error('❌ Registration error:', error);
+      toast.error('Registration failed', {
+        description: 'Could not connect to server. Make sure backend is running on http://localhost:5000',
+      });
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -223,10 +293,10 @@ export function RegisterPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white h-11"
-                disabled={!formData.agreeToTerms || formData.password !== formData.confirmPassword}
+                className="w-full bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white h-11 disabled:opacity-50"
+                disabled={!formData.agreeToTerms || formData.password !== formData.confirmPassword || isLoading}
               >
-                Create Account
+                {isLoading ? 'Creating Account...' : 'Create Account'}
               </Button>
 
               <div className="relative my-6">
