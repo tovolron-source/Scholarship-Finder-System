@@ -82,16 +82,16 @@ export function SearchPage() {
         <h3 className="font-semibold text-[#1A2E5A] mb-3">GPA Requirement</h3>
         <div className="space-y-3">
           <Slider
-            value={gpaRange}
-            onValueChange={setGpaRange}
-            min={0}
+            value={[gpaRange[1]]}
+            onValueChange={(value) => setGpaRange([2.0, value[0]])}
+            min={2.0}
             max={4.0}
             step={0.1}
             className="w-full"
           />
           <div className="flex items-center justify-between text-sm text-[#64748B]">
-            <span>{gpaRange[0].toFixed(1)}</span>
-            <span>{gpaRange[1].toFixed(1)}</span>
+            <span>Min: 2.0</span>
+            <span>Max: {gpaRange[1].toFixed(1)}</span>
           </div>
         </div>
       </div>
@@ -212,7 +212,7 @@ export function SearchPage() {
             </p>
             
             {/* Active Filters */}
-            {(selectedTypes.length > 0 || selectedCourses.length > 0 || gpaRange[0] > 2.0) && (
+            {(selectedTypes.length > 0 || selectedCourses.length > 0 || gpaRange[1] < 4.0) && (
               <div className="flex items-center gap-2 flex-wrap">
                 {selectedTypes.map((type) => (
                   <Badge key={type} variant="secondary" className="gap-1">
@@ -223,12 +223,12 @@ export function SearchPage() {
                     />
                   </Badge>
                 ))}
-                {gpaRange[0] > 2.0 && (
+                {gpaRange[1] < 4.0 && (
                   <Badge variant="secondary" className="gap-1">
-                    GPA {gpaRange[0].toFixed(1)}+
+                    GPA {gpaRange[1].toFixed(1)} max
                     <X
                       className="h-3 w-3 cursor-pointer"
-                      onClick={() => setGpaRange([2.0])}
+                      onClick={() => setGpaRange([2.0, 4.0])}
                     />
                   </Badge>
                 )}
@@ -265,7 +265,7 @@ export function SearchPage() {
                     variant="outline"
                     onClick={() => {
                       setSearchQuery('');
-                      setGpaRange([2.0]);
+                      setGpaRange([2.0, 4.0]);
                       setSelectedTypes([]);
                       setSelectedCourses([]);
                     }}

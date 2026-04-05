@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Search, Users, Award, TrendingUp, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -11,7 +11,14 @@ import { mockScholarships } from '../lib/mock-data';
 export function LandingPage() {
   const navigate = useNavigate();
   const [searchInput] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const featuredScholarships = mockScholarships.slice(0, 3);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    setIsLoggedIn(!!(token && user));
+  }, []);
 
   const handleSearch = () => {
     // Check if user is logged in by checking localStorage for token
@@ -59,12 +66,16 @@ export function LandingPage() {
             </div>
 
             <div className="flex flex-col md:flex-row gap-4 justify-center mt-8">
-              <Button asChild size="lg" className="bg-[#F5A623] hover:bg-[#E69515] text-white">
-                <Link to="/register">Get Started</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="bg-white/10 border-white text-white hover:bg-white/20">
-                <Link to="/login">Sign In</Link>
-              </Button>
+              {!isLoggedIn && (
+                <>
+                  <Button asChild size="lg" className="bg-[#F5A623] hover:bg-[#E69515] text-white">
+                    <Link to="/register">Get Started</Link>
+                  </Button>
+                  <Button asChild size="lg" variant="outline" className="bg-white/10 border-white text-white hover:bg-white/20">
+                    <Link to="/login">Sign In</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

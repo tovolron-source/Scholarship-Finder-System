@@ -46,7 +46,7 @@ export function ProfilePage() {
           if (data.success && data.user) {
             setUserData({
               id: data.user.id.toString(),
-              fullName: data.user.FullName || user.FullName || 'Your Name',
+              fullName: data.user.FullName || data.user.Name || user.FullName || 'Your Name',
               email: data.user.Email || user.Email || 'your.email@example.com',
               profilePhoto: data.user.ProfilePhoto || undefined,
               contactNumber: data.user.ContactNumber || '',
@@ -62,7 +62,7 @@ export function ProfilePage() {
           // Use stored user data as fallback
           setUserData({
             id: user.id?.toString() || '1',
-            fullName: user.FullName || 'Your Name',
+            fullName: user.FullName || user.Name || 'Your Name',
             email: user.Email || 'your.email@example.com',
             profilePhoto: user.ProfilePhoto || undefined,
             contactNumber: user.ContactNumber || '',

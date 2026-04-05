@@ -1,5 +1,6 @@
-import { Link, useLocation } from 'react-router';
-import { Bell, User, Search, Home, Heart, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { Bell, User, Search, Home, Heart, FileText, LogOut } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import {
@@ -10,11 +11,39 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { mockUser, mockNotifications } from '../../lib/mock-data';
+import { mockNotifications } from '../../lib/mock-data';
+import { toast } from 'sonner';
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const unreadCount = mockNotifications.filter(n => !n.read).length;
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+
+    if (storedUser && token) {
+      setUser(JSON.parse(storedUser));
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    setIsLoggedIn(false);
+    toast.success('Logged out successfully!', {
+      action: {
+        label: 'Close',
+        onClick: () => {},
+      },
+    });
+    navigate('/login');
+  };
 
   return (
     <>
@@ -82,9 +111,9 @@ export function Navbar() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar>
-                      <AvatarImage src={mockUser.profilePhoto} alt={mockUser.fullName} />
+                      <AvatarImage src={user?.ProfilePhoto} alt={user?.FullName} />
                       <AvatarFallback className="bg-[#1A2E5A] text-white">
-                        {mockUser.fullName.split(' ').map(n => n[0]).join('')}
+                        {user?.FullName ? user.FullName.split(' ').map((n: string) => n[0]).join('') : 'U'}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -92,8 +121,8 @@ export function Navbar() {
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{mockUser.fullName}</p>
-                      <p className="text-xs text-muted-foreground">{mockUser.email}</p>
+                      <p className="text-sm font-medium">{user?.FullName || 'User'}</p>
+                      <p className="text-xs text-muted-foreground">{user?.Email || ''}</p>
                     </div>
                   </div>
                   <DropdownMenuSeparator />
@@ -104,8 +133,9 @@ export function Navbar() {
                     <Link to="/notifications">Notifications</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/login">Sign Out</Link>
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
