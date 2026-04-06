@@ -22,7 +22,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
     const connection = await pool.getConnection();
     const [users] = await connection.query(
-      'SELECT u.id, u.FullName, u.Email, u.Name, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?',
+      'SELECT u.id, u.Email, u.Name, sp.gender, sp.address, sp.fullName, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?',
       [userId]
     );
     connection.release();
@@ -50,7 +50,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Helper function to create or update student profile
-const createOrUpdateStudentProfile = async (connection: any, userId: number, gender?: string, address?: string, school?: string, course?: string, yearLevel?: string, gpa?: number, financialStatus?: string, contactNumber?: string, profilePhoto?: string, profileCompletion?: number): Promise<void> => {
+const createOrUpdateStudentProfile = async (connection: any, userId: number, fullName?: string, gender?: string, address?: string, school?: string, course?: string, yearLevel?: string, gpa?: number, financialStatus?: string, contactNumber?: string, profilePhoto?: string, profileCompletion?: number): Promise<void> => {
   try {
     // Check if student profile exists
     const [existingProfileRows] = await connection.query(
@@ -61,6 +61,7 @@ const createOrUpdateStudentProfile = async (connection: any, userId: number, gen
     const existingProfile = (existingProfileRows as any[])[0];
 
     if (existingProfile) {
+      const updatedFullName = fullName !== undefined ? fullName : existingProfile.fullName;
       const updatedGender = gender !== undefined ? gender : existingProfile.gender;
       const updatedAddress = address !== undefined ? address : existingProfile.address;
       const updatedSchool = school !== undefined ? school : existingProfile.school;
@@ -74,9 +75,10 @@ const createOrUpdateStudentProfile = async (connection: any, userId: number, gen
 
       await connection.query(
         `UPDATE student_profile SET
-          gender = ?, address = ?, school = ?, course = ?, yearLevel = ?, gpa = ?, financialStatus = ?, contactNumber = ?, profilePhoto = ?, profileCompletion = ?
+          fullName = ?, gender = ?, address = ?, school = ?, course = ?, yearLevel = ?, gpa = ?, financialStatus = ?, contactNumber = ?, profilePhoto = ?, profileCompletion = ?
         WHERE userId = ?`,
         [
+          updatedFullName,
           updatedGender,
           updatedAddress,
           updatedSchool,
@@ -92,9 +94,9 @@ const createOrUpdateStudentProfile = async (connection: any, userId: number, gen
       );
     } else {
       await connection.query(
-        `INSERT INTO student_profile (userId, gender, address, school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, gender, address, school, course, yearLevel, typeof gpa === 'number' && Number.isFinite(gpa) ? gpa : null, financialStatus, contactNumber, profilePhoto, profileCompletion]
+        `INSERT INTO student_profile (userId, fullName, gender, address, school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, fullName, gender, address, school, course, yearLevel, typeof gpa === 'number' && Number.isFinite(gpa) ? gpa : null, financialStatus, contactNumber, profilePhoto, profileCompletion]
       );
     }
   } catch (error) {
@@ -142,11 +144,6 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     const updateFields: string[] = [];
     const updateValues: any[] = [];
 
-    if (fullName !== undefined) {
-      updateFields.push('Name = ?', 'FullName = ?');
-      updateValues.push(fullName, fullName);
-    }
-
     if (email !== undefined) {
       updateFields.push('Email = ?');
       updateValues.push(email);
@@ -163,6 +160,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     await createOrUpdateStudentProfile(
       connection,
       parseInt(userId),
+      fullName,
       gender,
       address,
       school,
@@ -176,7 +174,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     );
 
     const [updatedUsers] = await connection.query(
-      'SELECT u.id, u.FullName, u.Email, u.Name, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?',
+      'SELECT u.id, u.Email, u.Name, sp.gender, sp.address, sp.fullName, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?',
       [userId]
     );
     connection.release();
@@ -225,6 +223,9 @@ export const uploadProfilePhoto = async (req: Request, res: Response): Promise<v
     await createOrUpdateStudentProfile(
       connection,
       parseInt(userId),
+      undefined, // fullName
+      undefined, // gender
+      undefined, // address
       undefined, // school
       undefined, // course
       undefined, // yearLevel
@@ -346,17 +347,17 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     // Insert user
     const [result] = await connection.query(
-      'INSERT INTO user (Name, Email, Password, FullName) VALUES (?, ?, ?, ?)',
-      [fullName, email, hashedPassword, fullName]
+      'INSERT INTO user (Name, Email, Password) VALUES (?, ?, ?)',
+      [fullName, email, hashedPassword]
     );
 
     const insertId = (result as any).insertId;
     console.log('User inserted into database:', email, 'id:', insertId);
 
-    // Create initial student profile record
+    // Create initial student profile record with fullName
     await connection.query(
-      'INSERT INTO student_profile (userId, profileCompletion) VALUES (?, ?)',
-      [insertId, 20]
+      'INSERT INTO student_profile (userId, fullName, profileCompletion) VALUES (?, ?, ?)',
+      [insertId, fullName, 20]
     );
 
     connection.release();
@@ -371,7 +372,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Fetch the created user to return complete data
     const newConnection = await pool.getConnection();
     const [registeredUsers] = await newConnection.query(
-      'SELECT u.id, u.FullName, u.Email, u.Name, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
+      'SELECT u.id, u.Email, u.Name, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
       [email]
     );
     newConnection.release();
@@ -414,7 +415,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Find user with profile data
     const [users] = await connection.query(
-      'SELECT u.*, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
+      'SELECT u.id, u.Email, u.Name, u.Password, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
       [email]
     );
 
@@ -542,6 +543,18 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
 
       console.log('New user created via Google:', email);
 
+      // Create initial student profile record with fullName
+      const [userCheck] = await connection.query(
+        'SELECT id FROM user WHERE Email = ?',
+        [email]
+      );
+      const userId = (userCheck as any[])[0].id;
+
+      await connection.query(
+        'INSERT INTO student_profile (userId, fullName, profileCompletion) VALUES (?, ?, ?)',
+        [userId, name || email, 20]
+      );
+
       // Fetch the created user
       const [newUsers] = await connection.query(
         'SELECT * FROM user WHERE Email = ?',
@@ -554,15 +567,23 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
 
     connection.release();
 
+    // Fetch user with profile data
+    const newConnection = await pool.getConnection();
+    const [usersWithProfile] = await newConnection.query(
+      'SELECT u.id, u.Email, u.Name, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
+      [email]
+    );
+    newConnection.release();
+
+    const userWithProfile = (usersWithProfile as any[])[0];
+
     // Generate JWT token
     console.log('Generating JWT token...');
     const jwtToken = jwt.sign(
-      { id: user.id, email: user.Email },
+      { id: userWithProfile.id, email: userWithProfile.Email },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-
-    const { Password: _, ...userWithoutPassword } = user;
 
     console.log('Google login successful for user:', email);
 
@@ -570,7 +591,7 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
       success: true,
       message: 'Google login successful',
       token: jwtToken,
-      user: userWithoutPassword
+      user: userWithProfile
     });
   } catch (error) {
     console.error('Google login error:', error);
