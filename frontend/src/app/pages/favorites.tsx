@@ -1,22 +1,82 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router';
 import { Heart, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent } from '../components/ui/card';
 import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
-import { mockScholarships, mockSavedScholarships } from '../lib/mock-data';
 import { toast } from 'sonner';
 
 export function FavoritesPage() {
-  const [savedIds, setSavedIds] = useState<string[]>(mockSavedScholarships);
-  
-  const savedScholarships = mockScholarships.filter(s => savedIds.includes(s.id));
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [savedScholarships, setSavedScholarships] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const removeFromFavorites = (id: string) => {
-    setSavedIds(savedIds.filter(sid => sid !== id));
-    toast.success('Removed from favorites');
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+
+    if (!storedUser || !token) {
+      navigate('/login');
+      return;
+    }
+
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+
+    // Fetch saved scholarships from API
+    const fetchSavedScholarships = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `http://localhost:5000/api/favorites/student?userId=${parsedUser.id}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          // Format response data to match scholarship display structure
+          setSavedScholarships(data.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching favorites:', error);
+        toast.error('Failed to load saved scholarships');
+        setSavedScholarships([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSavedScholarships();
+  }, [navigate]);
+
+  const removeFromFavorites = async (scholarshipId: number) => {
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch('http://localhost:5000/api/favorites', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          scholarshipId,
+        }),
+      });
+
+      if (response.ok) {
+        setSavedScholarships(
+          savedScholarships.filter(
+            s => (s.ScholarshipID || s.scholarshipId) !== scholarshipId
+          )
+        );
+        toast.success('Removed from favorites');
+      }
+    } catch (error) {
+      console.error('Error removing from favorites:', error);
+      toast.error('Failed to remove from favorites');
+    }
   };
 
   return (
@@ -51,18 +111,18 @@ export function FavoritesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {savedScholarships.map((scholarship) => (
-              <Card key={scholarship.id} className="hover:shadow-lg transition-shadow">
+              <Card key={scholarship.id || scholarship.ScholarshipID} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-5 space-y-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex gap-2 flex-wrap">
-                      <Badge className="bg-[#1A2E5A] text-white">{scholarship.type}</Badge>
-                      <Badge variant="outline">GPA {scholarship.gpaRequirement}+</Badge>
+                      <Badge className="bg-[#1A2E5A] text-white">{scholarship.type || scholarship.Type}</Badge>
+                      <Badge variant="outline">GPA {scholarship.gpaRequirement || scholarship.GPARequirement}+</Badge>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="shrink-0"
-                      onClick={() => removeFromFavorites(scholarship.id)}
+                      onClick={() => removeFromFavorites(scholarship.ScholarshipID || parseInt(scholarship.id))}
                     >
                       <Trash2 className="h-4 w-4 text-[#E74C3C]" />
                     </Button>
@@ -70,29 +130,29 @@ export function FavoritesPage() {
 
                   <div>
                     <h3 className="font-semibold text-lg text-[#1A2E5A] mb-1 line-clamp-2">
-                      {scholarship.name}
+                      {scholarship.name || scholarship.ScholarshipName}
                     </h3>
-                    <p className="text-sm text-[#64748B]">{scholarship.provider}</p>
+                    <p className="text-sm text-[#64748B]">{scholarship.provider || scholarship.Provider}</p>
                   </div>
 
-                  <p className="text-sm text-[#64748B] line-clamp-2">{scholarship.description}</p>
+                  <p className="text-sm text-[#64748B] line-clamp-2">{scholarship.description || scholarship.Description}</p>
 
                   <div className="flex items-center gap-2 text-xs text-[#64748B]">
-                    <span>{scholarship.slots} slots</span>
+                    <span>{scholarship.slots || scholarship.Slots} slots</span>
                     <span>•</span>
-                    <span>Due: {new Date(scholarship.deadline).toLocaleDateString()}</span>
+                    <span>Due: {new Date(scholarship.deadline || scholarship.Deadline).toLocaleDateString()}</span>
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t">
-                    <p className="text-lg font-bold text-[#F5A623]">{scholarship.amount}</p>
+                    <p className="text-lg font-bold text-[#F5A623]">{scholarship.amount || scholarship.Amount}</p>
                     <div className="flex gap-2">
                       <Button asChild variant="ghost" size="sm" className="text-[#1A2E5A]">
-                        <Link to={`/scholarship/${scholarship.id}`}>
+                        <Link to={`/scholarship/${scholarship.id || scholarship.ScholarshipID}`}>
                           View Details
                         </Link>
                       </Button>
                       <Button asChild size="sm" className="bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white">
-                        <Link to={`/apply/${scholarship.id}`}>
+                        <Link to={`/apply/${scholarship.id || scholarship.ScholarshipID}`}>
                           Apply
                         </Link>
                       </Button>

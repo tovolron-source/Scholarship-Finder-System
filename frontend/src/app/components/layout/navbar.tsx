@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { mockNotifications } from '../../lib/mock-data';
 import { toast } from 'sonner';
 
 export function Navbar() {
@@ -19,7 +18,7 @@ export function Navbar() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const unreadCount = mockNotifications.filter(n => !n.read).length;
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');

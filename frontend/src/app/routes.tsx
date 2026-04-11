@@ -7,6 +7,8 @@ import { ProfilePage } from './pages/profile';
 import { NotFoundPage } from './pages/not-found';
 import { DesignSystemPage } from './pages/design-system';
 import { NotificationsPage } from './pages/notifications';
+import { ScholarshipDetailPage } from './pages/scholarship-detail';
+import { FavoritesPage } from './pages/favorites';
 
 export const router = createBrowserRouter([
     {
@@ -26,6 +28,14 @@ export const router = createBrowserRouter([
         Component: SearchPage,
     },
     {
+        path: '/scholarship/:id',
+        Component: ScholarshipDetailPage,
+    },
+    {
+        path: '/favorites',
+        Component: FavoritesPage,
+    },
+    {
         path: '/profile',
         Component: ProfilePage,
     },
@@ -38,7 +48,6 @@ export const router = createBrowserRouter([
         path: '/design-system',
         Component: DesignSystemPage,
     },
-
     {
         path: '*',
         Component: NotFoundPage,

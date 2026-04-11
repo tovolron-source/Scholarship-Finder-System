@@ -5,11 +5,10 @@ import { Badge } from '../components/ui/badge';
 import { Card, CardContent } from '../components/ui/card';
 import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
-import { mockNotifications } from '../lib/mock-data';
 import { toast } from 'sonner';
 
 export function NotificationsPage() {
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {

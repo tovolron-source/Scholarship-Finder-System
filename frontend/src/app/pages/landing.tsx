@@ -6,18 +6,34 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Footer } from '../components/layout/footer';
-import { mockScholarships } from '../lib/mock-data';
 
 export function LandingPage() {
   const navigate = useNavigate();
   const [searchInput] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const featuredScholarships = mockScholarships.slice(0, 3);
+  const [featuredScholarships, setFeaturedScholarships] = useState<any[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     setIsLoggedIn(!!(token && user));
+
+    // Fetch featured scholarships from API
+    const fetchFeaturedScholarships = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/scholarships');
+        if (response.ok) {
+          const data = await response.json();
+          // Get first 3 scholarships as featured
+          setFeaturedScholarships((data.data || []).slice(0, 3));
+        }
+      } catch (error) {
+        console.error('Error fetching featured scholarships:', error);
+        setFeaturedScholarships([]);
+      }
+    };
+
+    fetchFeaturedScholarships();
   }, []);
 
   const handleSearch = () => {
@@ -124,26 +140,26 @@ export function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             {featuredScholarships.map((scholarship) => (
-              <Card key={scholarship.id} className="hover:shadow-lg transition-shadow">
+              <Card key={scholarship.id || scholarship.ScholarshipID} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-start justify-between">
-                    <Badge className="bg-[#1A2E5A] text-white">{scholarship.type}</Badge>
+                    <Badge className="bg-[#1A2E5A] text-white">{scholarship.type || scholarship.Type}</Badge>
                     <Badge variant="outline" className="text-[#64748B]">
-                      GPA {scholarship.gpaRequirement}+
+                      GPA {scholarship.gpaRequirement || scholarship.GPARequirement}+
                     </Badge>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-[#1A2E5A] mb-2">{scholarship.name}</h3>
-                    <p className="text-sm text-[#64748B]">{scholarship.provider}</p>
+                    <h3 className="font-semibold text-lg text-[#1A2E5A] mb-2">{scholarship.name || scholarship.ScholarshipName}</h3>
+                    <p className="text-sm text-[#64748B]">{scholarship.provider || scholarship.Provider}</p>
                   </div>
-                  <p className="text-sm text-[#64748B] line-clamp-2">{scholarship.description}</p>
+                  <p className="text-sm text-[#64748B] line-clamp-2">{scholarship.description || scholarship.Description}</p>
                   <div className="flex items-center justify-between pt-4 border-t">
                     <div>
-                      <p className="text-lg font-bold text-[#F5A623]">{scholarship.amount}</p>
-                      <p className="text-xs text-[#64748B]">Deadline: {new Date(scholarship.deadline).toLocaleDateString()}</p>
+                      <p className="text-lg font-bold text-[#F5A623]">{scholarship.amount || scholarship.Amount}</p>
+                      <p className="text-xs text-[#64748B]">Deadline: {new Date(scholarship.deadline || scholarship.Deadline).toLocaleDateString()}</p>
                     </div>
                     <Button asChild variant="ghost" className="text-[#1A2E5A]">
-                      <Link to={`/scholarship/${scholarship.id}`}>
+                      <Link to={`/scholarship/${scholarship.id || scholarship.ScholarshipID}`}>
                         View Details
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>

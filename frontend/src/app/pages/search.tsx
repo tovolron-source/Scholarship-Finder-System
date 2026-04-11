@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Search, SlidersHorizontal, Heart, X, ChevronDown } from 'lucide-react';
+import { Search, SlidersHorizontal, Heart, X, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
@@ -10,7 +10,6 @@ import { Checkbox } from '../components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
-import { mockScholarships, mockSavedScholarships } from '../lib/mock-data';
 import { toast } from 'sonner';
 
 export function SearchPage() {
@@ -20,10 +19,17 @@ export function SearchPage() {
   const [gpaRange, setGpaRange] = useState([2.0, 4.0]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
-  const [savedScholarships, setSavedScholarships] = useState<string[]>(mockSavedScholarships);
+  const [savedScholarships, setSavedScholarships] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [defaultCourses, setDefaultCourses] = useState(['All Programs', 'BS Computer Science', 'BS Engineering', 'BS Biology', 'BS Physics', 'BS Mathematics']);
+  const [newCourse, setNewCourse] = useState('');
+  const [showAddCourse, setShowAddCourse] = useState(false);
+  const [scholarships, setScholarships] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Load user from localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
@@ -36,44 +42,158 @@ export function SearchPage() {
     setUser(JSON.parse(storedUser));
   }, [navigate]);
 
+  // Fetch scholarships from API
+  useEffect(() => {
+    const fetchScholarships = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:5000/api/scholarships');
+        if (response.ok) {
+          const data = await response.json();
+          setScholarships(data.data || []);
+          setError(null);
+        } else {
+          throw new Error('Failed to fetch scholarships');
+        }
+      } catch (err) {
+        console.error('Error fetching scholarships:', err);
+        setError('Failed to load scholarships. Please try again.');
+        setScholarships([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchScholarships();
+  }, []);
+
+  // Fetch saved favorites from API
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchFavorites = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/favorites/student?userId=${user.id}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          // Extract scholarship IDs from favorites
+          const favoriteIds = data.data?.map((fav: any) => 
+            String(fav.ScholarshipID || fav.scholarshipId || '')
+          ) || [];
+          setSavedScholarships(favoriteIds);
+        }
+      } catch (err) {
+        console.error('Error fetching favorites:', err);
+        setSavedScholarships([]);
+      }
+    };
+
+    fetchFavorites();
+  }, [user?.id]);
+
   const scholarshipTypes = ['Merit', 'Need-based', 'Athletic', 'Government', 'Private'];
-  const courses = ['All Programs', 'BS Computer Science', 'BS Engineering', 'BS Biology', 'BS Physics', 'BS Mathematics'];
+
+  const handleAddCourse = () => {
+    if (newCourse.trim() && !defaultCourses.includes(newCourse.trim())) {
+      setDefaultCourses([...defaultCourses, newCourse.trim()]);
+      setSelectedCourses([...selectedCourses, newCourse.trim()]);
+      setNewCourse('');
+      setShowAddCourse(false);
+      toast.success('Course added successfully');
+    } else if (defaultCourses.includes(newCourse.trim())) {
+      toast.error('This course already exists');
+    }
+  };
 
   const getEligibilityStatus = (scholarship: any) => {
     if (!user || !user.GPA || !user.Course) return 'partial';
     
-    const meetsGPA = user.GPA >= scholarship.gpaRequirement;
-    const meetsCourse = scholarship.eligibilityRequirements.courses.includes('All Programs') || 
-                        scholarship.eligibilityRequirements.courses.includes(user.Course || '');
-    const meetsYearLevel = scholarship.eligibilityRequirements.yearLevel.includes(user.YearLevel || '');
+    // Handle both database and mock data formats
+    const gpaRequirement = scholarship.gpaRequirement || scholarship.GPARequirement || 0;
+    const eligReqs = scholarship.eligibilityRequirements || 
+                     (scholarship.EligibilityRequirements ? JSON.parse(scholarship.EligibilityRequirements) : {});
+    
+    const meetsGPA = user.GPA >= gpaRequirement;
+    const courses = eligReqs.courses || [];
+    const meetsCourse = courses.includes('All Programs') || courses.includes(user.Course || '');
+    const yearLevels = eligReqs.yearLevel || [];
+    const meetsYearLevel = yearLevels.includes(user.YearLevel || '');
     
     if (meetsGPA && meetsCourse && meetsYearLevel) return 'eligible';
     if (!meetsGPA) return 'not-eligible';
     return 'partial';
   };
 
-  const filteredScholarships = mockScholarships.filter(scholarship => {
-    const matchesSearch = scholarship.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         scholarship.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         scholarship.description.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredScholarships = scholarships.filter(scholarship => {
+    // Handle both database and mock data formats
+    const name = scholarship.name || scholarship.ScholarshipName || '';
+    const provider = scholarship.provider || scholarship.Provider || '';
+    const description = scholarship.description || scholarship.Description || '';
+    const type = scholarship.type || scholarship.Type || '';
+    const gpaRequirement = scholarship.gpaRequirement || scholarship.GPARequirement || 0;
+    const eligReqs = scholarship.eligibilityRequirements || 
+                     (scholarship.EligibilityRequirements ? JSON.parse(scholarship.EligibilityRequirements) : {});
+
+    const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesGPA = scholarship.gpaRequirement >= gpaRange[0] && scholarship.gpaRequirement <= gpaRange[1];
-    const matchesType = selectedTypes.length === 0 || selectedTypes.includes(scholarship.type);
+    const matchesGPA = gpaRequirement >= gpaRange[0] && gpaRequirement <= gpaRange[1];
+    const matchesType = selectedTypes.length === 0 || selectedTypes.includes(type);
+    const courses = eligReqs.courses || [];
     const matchesCourse = selectedCourses.length === 0 || 
                          selectedCourses.includes('All Programs') ||
-                         scholarship.eligibilityRequirements.courses.some(c => selectedCourses.includes(c));
+                         courses.some((c: string) => selectedCourses.includes(c));
     
     return matchesSearch && matchesGPA && matchesType && matchesCourse;
   });
 
-  const toggleSaveScholarship = (id: string) => {
-    if (savedScholarships.includes(id)) {
-      setSavedScholarships(savedScholarships.filter(s => s !== id));
-      toast.success('Removed from favorites');
-    } else {
-      setSavedScholarships([...savedScholarships, id]);
-      toast.success('Added to favorites');
+  const toggleSaveScholarship = async (scholarshipId: string) => {
+    if (!user?.id) {
+      toast.error('Please log in to save scholarships');
+      return;
     }
+
+    const isCurrentlySaved = savedScholarships.includes(scholarshipId);
+    const endpoint = 'http://localhost:5000/api/favorites';
+
+    try {
+      const response = await fetch(endpoint, {
+        method: isCurrentlySaved ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          scholarshipId: parseInt(scholarshipId),
+        }),
+      });
+
+      if (response.ok) {
+        if (isCurrentlySaved) {
+          setSavedScholarships(savedScholarships.filter(s => s !== scholarshipId));
+          toast.success('Removed from favorites');
+        } else {
+          setSavedScholarships([...savedScholarships, scholarshipId]);
+          toast.success('Added to favorites');
+        }
+      } else {
+        throw new Error('Failed to update favorite');
+      }
+    } catch (err) {
+      console.error('Error updating favorite:', err);
+      toast.error('Failed to update favorites');
+    }
+  };
+
+  const handleClearAllFilters = () => {
+    setSearchQuery('');
+    setGpaRange([2.0, 4.0]);
+    setSelectedTypes([]);
+    setSelectedCourses([]);
+    toast.success('All filters cleared');
   };
 
   const FilterSection = () => (
@@ -121,9 +241,41 @@ export function SearchPage() {
       </div>
 
       <div>
-        <h3 className="font-semibold text-[#1A2E5A] mb-3">Course/Field of Study</h3>
-        <div className="space-y-2">
-          {courses.map((course) => (
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-[#1A2E5A]">Course/Field of Study</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAddCourse(!showAddCourse)}
+            className="text-[#1A2E5A] p-0 h-auto"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {showAddCourse && (
+          <div className="mb-3 space-y-2 pb-3 border-b">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add new course..."
+                value={newCourse}
+                onChange={(e) => setNewCourse(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddCourse()}
+                className="text-sm"
+              />
+              <Button
+                size="sm"
+                onClick={handleAddCourse}
+                className="bg-[#1A2E5A] text-white"
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        <div className="space-y-2 max-h-80 overflow-y-auto">
+          {defaultCourses.map((course) => (
             <div key={course} className="flex items-center gap-2">
               <Checkbox
                 id={`course-${course}`}
@@ -147,11 +299,7 @@ export function SearchPage() {
       <Button
         variant="outline"
         className="w-full"
-        onClick={() => {
-          setGpaRange([2.0]);
-          setSelectedTypes([]);
-          setSelectedCourses([]);
-        }}
+        onClick={handleClearAllFilters}
       >
         Clear All Filters
       </Button>
@@ -192,7 +340,7 @@ export function SearchPage() {
               </Button>
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full md:w-[180px]">
+                <SelectTrigger className="w-full md:w-45">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -239,7 +387,7 @@ export function SearchPage() {
 
         <div className="flex gap-6 flex-col-reverse md:flex-row">
           {/* Filter Sidebar - Desktop Always Visible, Mobile Toggleable */}
-          <aside className={`w-full md:w-64 flex-shrink-0 ${!showFilters && 'md:block hidden'}`}>
+          <aside className={`w-full md:w-64 shrink-0 ${!showFilters && 'md:block hidden'}`}>
             <Card className="md:sticky md:top-24">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -253,7 +401,26 @@ export function SearchPage() {
 
           {/* Results Grid */}
           <div className="flex-1">
-            {filteredScholarships.length === 0 ? (
+            {loading ? (
+              <Card className="p-12">
+                <div className="text-center">
+                  <div className="inline-block">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1A2E5A]"></div>
+                  </div>
+                  <p className="mt-4 text-[#64748B]">Loading scholarships...</p>
+                </div>
+              </Card>
+            ) : error ? (
+              <Card className="p-12">
+                <div className="text-center space-y-4">
+                  <h3 className="text-xl font-semibold text-[#E74C3C]">Failed to Load</h3>
+                  <p className="text-[#64748B]">{error}</p>
+                  <Button onClick={() => window.location.reload()}>
+                    Retry
+                  </Button>
+                </div>
+              </Card>
+            ) : filteredScholarships.length === 0 ? (
               <Card className="p-12">
                 <div className="text-center space-y-4">
                   <div className="w-20 h-20 bg-[#F8F9FC] rounded-full flex items-center justify-center mx-auto">
@@ -263,12 +430,7 @@ export function SearchPage() {
                   <p className="text-[#64748B]">Try adjusting your search criteria or filters</p>
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setGpaRange([2.0, 4.0]);
-                      setSelectedTypes([]);
-                      setSelectedCourses([]);
-                    }}
+                    onClick={handleClearAllFilters}
                   >
                     Clear All Filters
                   </Button>
@@ -278,14 +440,23 @@ export function SearchPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredScholarships.map((scholarship) => {
                   const eligibility = getEligibilityStatus(scholarship);
-                  const isSaved = savedScholarships.includes(scholarship.id);
+                  const scholarshipId = String(scholarship.id || scholarship.ScholarshipID);
+                  const name = scholarship.name || scholarship.ScholarshipName || '';
+                  const provider = scholarship.provider || scholarship.Provider || '';
+                  const description = scholarship.description || scholarship.Description || '';
+                  const type = scholarship.type || scholarship.Type || '';
+                  const gpaRequirement = scholarship.gpaRequirement || scholarship.GPARequirement || '';
+                  const slots = scholarship.slots || scholarship.Slots || '';
+                  const amount = scholarship.amount || scholarship.Amount || '';
+                  const deadline = scholarship.deadline || scholarship.Deadline || '';
+                  const isSaved = savedScholarships.includes(scholarshipId);
                   
                   return (
-                    <Card key={scholarship.id} className="hover:shadow-lg transition-shadow">
+                    <Card key={scholarshipId} className="hover:shadow-lg transition-shadow">
                       <CardContent className="p-5 space-y-4">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex gap-2 flex-wrap">
-                            <Badge className="bg-[#1A2E5A] text-white">{scholarship.type}</Badge>
+                            <Badge className="bg-[#1A2E5A] text-white">{type}</Badge>
                             {eligibility === 'eligible' && (
                               <Badge className="bg-[#2ECC71] text-white">✓ Likely Eligible</Badge>
                             )}
@@ -299,8 +470,8 @@ export function SearchPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="flex-shrink-0"
-                            onClick={() => toggleSaveScholarship(scholarship.id)}
+                            className="shrink-0"
+                            onClick={() => toggleSaveScholarship(scholarshipId)}
                           >
                             <Heart
                               className={`h-5 w-5 ${isSaved ? 'fill-red-500 text-red-500' : 'text-[#64748B]'}`}
@@ -310,26 +481,26 @@ export function SearchPage() {
 
                         <div>
                           <h3 className="font-semibold text-lg text-[#1A2E5A] mb-1 line-clamp-2">
-                            {scholarship.name}
+                            {name}
                           </h3>
-                          <p className="text-sm text-[#64748B]">{scholarship.provider}</p>
+                          <p className="text-sm text-[#64748B]">{provider}</p>
                         </div>
 
-                        <p className="text-sm text-[#64748B] line-clamp-2">{scholarship.description}</p>
+                        <p className="text-sm text-[#64748B] line-clamp-2">{description}</p>
 
                         <div className="flex items-center gap-2 text-xs text-[#64748B]">
-                          <Badge variant="outline">GPA {scholarship.gpaRequirement}+</Badge>
+                          <Badge variant="outline">GPA {gpaRequirement}+</Badge>
                           <span>•</span>
-                          <span>{scholarship.slots} slots</span>
+                          <span>{slots} slots</span>
                         </div>
 
                         <div className="flex items-center justify-between pt-3 border-t">
                           <div>
-                            <p className="text-lg font-bold text-[#F5A623]">{scholarship.amount}</p>
-                            <p className="text-xs text-[#64748B]">Due: {new Date(scholarship.deadline).toLocaleDateString()}</p>
+                            <p className="text-lg font-bold text-[#F5A623]">{amount}</p>
+                            <p className="text-xs text-[#64748B]">Due: {new Date(deadline).toLocaleDateString()}</p>
                           </div>
                           <Button asChild variant="ghost" size="sm" className="text-[#1A2E5A]">
-                            <Link to={`/scholarship/${scholarship.id}`}>
+                            <Link to={`/scholarship/${scholarshipId}`}>
                               View Details
                             </Link>
                           </Button>

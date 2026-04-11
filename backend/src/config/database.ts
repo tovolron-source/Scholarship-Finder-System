@@ -56,6 +56,46 @@ async function initializeTables() {
     `);
 
     console.log('✅ Student Profile table ready');
+
+    // Create scholarship table if it doesn't exist
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS scholarship (
+        ScholarshipID INT AUTO_INCREMENT PRIMARY KEY,
+        ScholarshipName VARCHAR(255) NOT NULL,
+        Provider VARCHAR(255) NOT NULL,
+        Type ENUM('Merit', 'Need-based', 'Athletic', 'Government', 'Private') NOT NULL,
+        Description LONGTEXT,
+        Benefits JSON,
+        Amount VARCHAR(100),
+        Slots INT DEFAULT 0,
+        GPARequirement DECIMAL(3,2) DEFAULT 0.0,
+        Deadline DATE,
+        ApplicationMethod VARCHAR(255),
+        GoogleFormLink VARCHAR(500),
+        ProviderContact VARCHAR(255),
+        EligibilityRequirements JSON,
+        ApplicationProcess JSON,
+        CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+
+    console.log('✅ Scholarship table ready');
+
+    // Create favorites table if it doesn't exist
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS favorite (
+        FavoriteID INT AUTO_INCREMENT PRIMARY KEY,
+        StudentID INT NOT NULL,
+        ScholarshipID INT NOT NULL,
+        CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_student_scholarship (StudentID, ScholarshipID),
+        FOREIGN KEY (StudentID) REFERENCES user(id) ON DELETE CASCADE,
+        FOREIGN KEY (ScholarshipID) REFERENCES scholarship(ScholarshipID) ON DELETE CASCADE
+      )
+    `);
+
+    console.log('✅ Favorite table ready');
     connection.release();
   } catch (error) {
     console.error('❌ Error initializing tables:', error);

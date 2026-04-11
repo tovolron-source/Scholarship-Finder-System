@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import authRoutes from './routes/auth';
+import scholarshipRoutes from './routes/scholarships';
+import favoriteRoutes from './routes/favorites';
 import pool from './config/database';
 
 dotenv.config();
@@ -21,6 +23,8 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/scholarships', scholarshipRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

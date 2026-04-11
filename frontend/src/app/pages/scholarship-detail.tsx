@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router';
 import { ArrowLeft, Heart, Share2, CheckCircle2, XCircle, AlertCircle, Calendar, Users, Award } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -8,30 +8,147 @@ import { Progress } from '../components/ui/progress';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '../components/ui/breadcrumb';
 import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
-import { mockScholarships, mockSavedScholarships, mockUser } from '../lib/mock-data';
 import { toast } from 'sonner';
 
 export function ScholarshipDetailPage() {
   const { id } = useParams();
-  const scholarship = mockScholarships.find(s => s.id === id);
-  const [isSaved, setIsSaved] = useState(mockSavedScholarships.includes(id || ''));
+  const [scholarship, setScholarship] = useState<any>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!scholarship) {
-    return <div>Scholarship not found</div>;
+  useEffect(() => {
+    // Load user from localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchScholarship = async () => {
+      try {
+        setLoading(true);
+        // Fetch from API
+        const response = await fetch(`http://localhost:5000/api/scholarships/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setScholarship(data.data);
+          setError(null);
+        } else {
+          throw new Error('Scholarship not found');
+        }
+      } catch (error) {
+        console.error('Error fetching scholarship:', error);
+        setError('Failed to load scholarship details. Please try again.');
+        setScholarship(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchScholarship();
+    }
+  }, [id]);
+
+  // Check if scholarship is saved
+  useEffect(() => {
+    if (!user?.id || !id) return;
+
+    const checkIfSaved = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/favorites/check?userId=${user.id}&scholarshipId=${id}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setIsSaved(data.data?.isFavorited || false);
+        }
+      } catch (err) {
+        console.error('Error checking favorite status:', err);
+        setIsSaved(false);
+      }
+    };
+
+    checkIfSaved();
+  }, [user?.id, id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8F9FC]">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-6 py-8 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1A2E5A]"></div>
+            </div>
+            <p className="mt-4 text-[#64748B]">Loading scholarship details...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
-  const toggleSave = () => {
-    setIsSaved(!isSaved);
-    toast.success(isSaved ? 'Removed from favorites' : 'Added to favorites');
+  if (error || !scholarship) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8F9FC]">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-6 py-8 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h3 className="text-xl font-semibold text-[#E74C3C]">{error || 'Scholarship not found'}</h3>
+            <p className="text-[#64748B]">This scholarship may have been removed or is no longer available.</p>
+            <Button asChild>
+              <Link to="/search">Back to Search</Link>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const toggleSave = async () => {
+    if (!user?.id) {
+      toast.error('Please log in to save scholarships');
+      return;
+    }
+
+    const endpoint = 'http://localhost:5000/api/favorites';
+
+    try {
+      const response = await fetch(endpoint, {
+        method: isSaved ? 'DELETE' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          scholarshipId: parseInt(id || '0'),
+        }),
+      });
+
+      if (response.ok) {
+        setIsSaved(!isSaved);
+        toast.success(isSaved ? 'Removed from favorites' : 'Added to favorites');
+      } else {
+        throw new Error('Failed to update favorite');
+      }
+    } catch (err) {
+      console.error('Error updating favorite:', err);
+      toast.error('Failed to update favorites');
+    }
   };
 
   // Calculate eligibility match
-  const meetsGPA = (mockUser.gpa || 0) >= scholarship.gpaRequirement;
-  const meetsCourse = scholarship.eligibilityRequirements.courses.includes('All Programs') || 
-                      scholarship.eligibilityRequirements.courses.includes(mockUser.course || '');
-  const meetsYearLevel = scholarship.eligibilityRequirements.yearLevel.includes(mockUser.yearLevel || '');
-  const meetsFinancial = !scholarship.eligibilityRequirements.financialStatus || 
-                        scholarship.eligibilityRequirements.financialStatus.includes(mockUser.financialStatus || '');
+  const meetsGPA = (user?.gpa || user?.GPA || 0) >= (scholarship.gpaRequirement || scholarship.GPARequirement);
+  const meetsCourse = (scholarship.eligibilityRequirements?.courses || scholarship.EligibilityRequirements?.courses || []).includes('All Programs') || 
+                      (scholarship.eligibilityRequirements?.courses || scholarship.EligibilityRequirements?.courses || []).includes(user?.course || user?.Course || '');
+  const meetsYearLevel = (scholarship.eligibilityRequirements?.yearLevel || scholarship.EligibilityRequirements?.yearLevel || []).includes(user?.yearLevel || user?.YearLevel || '');
+  const meetsFinancial = !(scholarship.eligibilityRequirements?.financialStatus || scholarship.EligibilityRequirements?.financialStatus) || 
+                        (scholarship.eligibilityRequirements?.financialStatus || scholarship.EligibilityRequirements?.financialStatus || []).includes(user?.financialStatus || user?.FinancialStatus || '');
   
   const criteriaChecks = [
     { label: 'GPA', meets: meetsGPA, value: meetsGPA },
@@ -41,7 +158,7 @@ export function ScholarshipDetailPage() {
   ];
 
   const matchScore = (criteriaChecks.filter(c => c.meets).length / criteriaChecks.length) * 100;
-  const profileComplete = mockUser.profileCompletion === 100;
+  const profileComplete = (user?.profileCompletion || 0) === 100;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FC]">
@@ -64,7 +181,7 @@ export function ScholarshipDetailPage() {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{scholarship.name}</BreadcrumbPage>
+              <BreadcrumbPage>{scholarship.name || scholarship.ScholarshipName}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -82,17 +199,17 @@ export function ScholarshipDetailPage() {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Badge className="bg-[#1A2E5A] text-white">{scholarship.type}</Badge>
-                <Badge variant="outline">GPA {scholarship.gpaRequirement}+</Badge>
+                <Badge className="bg-[#1A2E5A] text-white">{scholarship.type || scholarship.Type}</Badge>
+                <Badge variant="outline">GPA {scholarship.gpaRequirement || scholarship.GPARequirement}+</Badge>
                 <Badge className="bg-[#F5A623] text-white">
                   <Calendar className="mr-1 h-3 w-3" />
-                  Due: {new Date(scholarship.deadline).toLocaleDateString()}
+                  Due: {new Date(scholarship.deadline || scholarship.Deadline).toLocaleDateString()}
                 </Badge>
               </div>
               <h1 style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl md:text-4xl text-[#1A2E5A] mb-2">
-                {scholarship.name}
+                {scholarship.name || scholarship.ScholarshipName}
               </h1>
-              <p className="text-lg text-[#64748B]">{scholarship.provider}</p>
+              <p className="text-lg text-[#64748B]">{scholarship.provider || scholarship.Provider}</p>
             </div>
 
             <div className="flex gap-2">
@@ -115,7 +232,7 @@ export function ScholarshipDetailPage() {
                 <CardTitle>About This Scholarship</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-[#64748B] leading-relaxed">{scholarship.description}</p>
+                <p className="text-[#64748B] leading-relaxed">{scholarship.description || scholarship.Description}</p>
               </CardContent>
             </Card>
 
@@ -126,7 +243,7 @@ export function ScholarshipDetailPage() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
-                  {scholarship.benefits.map((benefit, index) => (
+                  {(Array.isArray(scholarship.benefits) ? scholarship.benefits : scholarship.Benefits ? JSON.parse(scholarship.Benefits) : []).map((benefit: string, index: number) => (
                     <li key={index} className="flex items-start gap-3">
                       <CheckCircle2 className="h-5 w-5 text-[#2ECC71] shrink-0 mt-0.5" />
                       <span className="text-[#64748B]">{benefit}</span>
@@ -147,7 +264,7 @@ export function ScholarshipDetailPage() {
                     <CheckCircle2 className="h-5 w-5 text-[#1A2E5A] shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium text-[#1A2E5A]">GPA Requirement</p>
-                      <p className="text-sm text-[#64748B]">{scholarship.gpaRequirement} or higher</p>
+                      <p className="text-sm text-[#64748B]">{scholarship.gpaRequirement || scholarship.GPARequirement} or higher</p>
                     </div>
                   </div>
 
@@ -156,7 +273,7 @@ export function ScholarshipDetailPage() {
                     <div>
                       <p className="font-medium text-[#1A2E5A]">Eligible Programs</p>
                       <p className="text-sm text-[#64748B]">
-                        {scholarship.eligibilityRequirements.courses.join(', ')}
+                        {((scholarship.eligibilityRequirements?.courses || scholarship.EligibilityRequirements?.courses) || (typeof scholarship.EligibilityRequirements === 'string' ? JSON.parse(scholarship.EligibilityRequirements).courses : [])).join(', ')}
                       </p>
                     </div>
                   </div>
@@ -166,18 +283,18 @@ export function ScholarshipDetailPage() {
                     <div>
                       <p className="font-medium text-[#1A2E5A]">Year Level</p>
                       <p className="text-sm text-[#64748B]">
-                        {scholarship.eligibilityRequirements.yearLevel.join(', ')}
+                        {((scholarship.eligibilityRequirements?.yearLevel || scholarship.EligibilityRequirements?.yearLevel) || (typeof scholarship.EligibilityRequirements === 'string' ? JSON.parse(scholarship.EligibilityRequirements).yearLevel : [])).join(', ')}
                       </p>
                     </div>
                   </div>
 
-                  {scholarship.eligibilityRequirements.financialStatus && (
+                  {(scholarship.eligibilityRequirements?.financialStatus || scholarship.EligibilityRequirements?.financialStatus || (typeof scholarship.EligibilityRequirements === 'string' ? JSON.parse(scholarship.EligibilityRequirements).financialStatus : null)) && (
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="h-5 w-5 text-[#1A2E5A] shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-[#1A2E5A]">Financial Status</p>
                         <p className="text-sm text-[#64748B]">
-                          {scholarship.eligibilityRequirements.financialStatus.join(', ')}
+                          {((scholarship.eligibilityRequirements?.financialStatus || scholarship.EligibilityRequirements?.financialStatus) || (typeof scholarship.EligibilityRequirements === 'string' ? JSON.parse(scholarship.EligibilityRequirements).financialStatus : [])).join(', ')}
                         </p>
                       </div>
                     </div>
@@ -193,9 +310,9 @@ export function ScholarshipDetailPage() {
               </CardHeader>
               <CardContent>
                 <ol className="space-y-4">
-                  {scholarship.applicationProcess.map((step, index) => (
+                  {(Array.isArray(scholarship.applicationProcess) ? scholarship.applicationProcess : scholarship.ApplicationProcess ? JSON.parse(scholarship.ApplicationProcess) : []).map((step: string, index: number) => (
                     <li key={index} className="flex items-start gap-4">
-                      <div className="w-8 h-8 bg-[#1A2E5A] text-white rounded-full flex items-center justify-center flex-shrink-0 font-semibold">
+                      <div className="w-8 h-8 bg-[#1A2E5A] text-white rounded-full flex items-center justify-center shrink-0 font-semibold">
                         {index + 1}
                       </div>
                       <p className="text-[#64748B] pt-1">{step}</p>
@@ -209,7 +326,7 @@ export function ScholarshipDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Info Card */}
-            <Card className="lg:sticky lg:top-24">
+            <Card>
               <CardHeader>
                 <CardTitle>Quick Info</CardTitle>
               </CardHeader>
@@ -220,7 +337,7 @@ export function ScholarshipDetailPage() {
                   </div>
                   <div>
                     <p className="text-sm text-[#64748B]">Amount</p>
-                    <p className="font-semibold text-[#1A2E5A]">{scholarship.amount}</p>
+                    <p className="font-semibold text-[#1A2E5A]">{scholarship.amount || scholarship.Amount}</p>
                   </div>
                 </div>
 
@@ -230,7 +347,7 @@ export function ScholarshipDetailPage() {
                   </div>
                   <div>
                     <p className="text-sm text-[#64748B]">Available Slots</p>
-                    <p className="font-semibold text-[#1A2E5A]">{scholarship.slots} positions</p>
+                    <p className="font-semibold text-[#1A2E5A]">{scholarship.slots || scholarship.Slots} positions</p>
                   </div>
                 </div>
 
@@ -241,7 +358,7 @@ export function ScholarshipDetailPage() {
                   <div>
                     <p className="text-sm text-[#64748B]">Deadline</p>
                     <p className="font-semibold text-[#1A2E5A]">
-                      {new Date(scholarship.deadline).toLocaleDateString('en-US', { 
+                      {new Date(scholarship.deadline || scholarship.Deadline).toLocaleDateString('en-US', { 
                         month: 'long', 
                         day: 'numeric', 
                         year: 'numeric' 
@@ -252,7 +369,7 @@ export function ScholarshipDetailPage() {
 
                 <div>
                   <p className="text-sm text-[#64748B] mb-1">Provider Contact</p>
-                  <p className="text-sm font-medium text-[#1A2E5A]">{scholarship.providerContact}</p>
+                  <p className="text-sm font-medium text-[#1A2E5A]">{scholarship.providerContact || scholarship.ProviderContact}</p>
                 </div>
               </CardContent>
             </Card>
@@ -301,56 +418,59 @@ export function ScholarshipDetailPage() {
                   <div className="space-y-2">
                     <div className="flex items-start gap-2">
                       {meetsGPA ? (
-                        <CheckCircle2 className="h-5 w-5 text-[#2ECC71] flex-shrink-0" />
+                        <CheckCircle2 className="h-5 w-5 text-[#2ECC71] shrink-0" />
                       ) : (
-                        <XCircle className="h-5 w-5 text-[#E74C3C] flex-shrink-0" />
+                        <XCircle className="h-5 w-5 text-[#E74C3C] shrink-0" />
                       )}
                       <div className="flex-1">
                         <p className="text-sm text-[#1A2E5A]">GPA</p>
                         <p className="text-xs text-[#64748B]">
                           {meetsGPA 
-                            ? `Your GPA (${mockUser.gpa}) meets requirement (${scholarship.gpaRequirement}+)` 
-                            : `Your GPA (${mockUser.gpa}) doesn't meet requirement (${scholarship.gpaRequirement}+)`}
+                            ? `Your GPA (${user?.gpa || user?.GPA}) meets requirement (${scholarship.gpaRequirement || scholarship.GPARequirement}+)` 
+                            : `Your GPA (${user?.gpa || user?.GPA}) doesn't meet requirement (${scholarship.gpaRequirement || scholarship.GPARequirement}+)`}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-2">
                       {meetsCourse ? (
-                        <CheckCircle2 className="h-5 w-5 text-[#2ECC71] flex-shrink-0" />
+                        <CheckCircle2 className="h-5 w-5 text-[#2ECC71] shrink-0" />
                       ) : (
-                        <XCircle className="h-5 w-5 text-[#E74C3C] flex-shrink-0" />
+                        <XCircle className="h-5 w-5 text-[#E74C3C] shrink-0" />
                       )}
                       <div className="flex-1">
                         <p className="text-sm text-[#1A2E5A]">Course</p>
                         <p className="text-xs text-[#64748B]">
-                          {meetsCourse ? `${mockUser.course} — Eligible` : `${mockUser.course} — Not eligible`}
+                          {meetsCourse ? `${user?.course || user?.Course} — Eligible` : `${user?.course || user?.Course} — Not eligible`}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-2">
                       {meetsYearLevel ? (
-                        <CheckCircle2 className="h-5 w-5 text-[#2ECC71] flex-shrink-0" />
+                        <CheckCircle2 className="h-5 w-5 text-[#2ECC71] shrink-0" />
                       ) : (
-                        <AlertCircle className="h-5 w-5 text-[#E67E22] flex-shrink-0" />
+                        <AlertCircle className="h-5 w-5 text-[#E67E22] shrink-0" />
                       )}
                       <div className="flex-1">
                         <p className="text-sm text-[#1A2E5A]">Year Level</p>
                         <p className="text-xs text-[#64748B]">
                           {meetsYearLevel 
-                            ? `${mockUser.yearLevel} — Eligible` 
-                            : `You are ${mockUser.yearLevel}`}
+                            ? `${user?.yearLevel || user?.YearLevel} — Eligible` 
+                            : `You are ${user?.yearLevel || user?.YearLevel}`}
                         </p>
                       </div>
                     </div>
 
-                    {scholarship.eligibilityRequirements.financialStatus && (
+                    {(() => {
+                      const eligReqs = scholarship.eligibilityRequirements || 
+                                      (scholarship.EligibilityRequirements ? JSON.parse(scholarship.EligibilityRequirements) : {});
+                      return eligReqs?.financialStatus ? (
                       <div className="flex items-start gap-2">
                         {meetsFinancial ? (
-                          <CheckCircle2 className="h-5 w-5 text-[#2ECC71] flex-shrink-0" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-[#E74C3C] flex-shrink-0" />
+                            <CheckCircle2 className="h-5 w-5 text-[#2ECC71] shrink-0" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-[#E74C3C] shrink-0" />
                         )}
                         <div className="flex-1">
                           <p className="text-sm text-[#1A2E5A]">Financial Status</p>
@@ -359,7 +479,8 @@ export function ScholarshipDetailPage() {
                           </p>
                         </div>
                       </div>
-                    )}
+                      ) : null;
+                    })()}
                   </div>
                 </div>
 
@@ -377,7 +498,7 @@ export function ScholarshipDetailPage() {
 
                 <div className="space-y-2 pt-4 border-t">
                   <Button asChild className="w-full bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white">
-                    <Link to={`/apply/${scholarship.id}`}>Apply Now</Link>
+                    <Link to={`/apply/${scholarship.id || scholarship.ScholarshipID}`}>Apply Now</Link>
                   </Button>
                   <Button variant="outline" className="w-full" onClick={toggleSave}>
                     <Heart className={`mr-2 h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
@@ -393,7 +514,7 @@ export function ScholarshipDetailPage() {
         <div className="lg:hidden fixed bottom-16 left-0 right-0 bg-white border-t shadow-lg p-4 z-40">
           <div className="flex gap-2">
             <Button asChild className="flex-1 bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white">
-              <Link to={`/apply/${scholarship.id}`}>Apply Now</Link>
+              <Link to={`/apply/${scholarship.id || scholarship.ScholarshipID}`}>Apply Now</Link>
             </Button>
             <Button variant="outline" size="icon" onClick={toggleSave}>
               <Heart className={`h-5 w-5 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />

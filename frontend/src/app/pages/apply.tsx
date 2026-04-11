@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Upload, FileText, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -11,13 +11,13 @@ import { Checkbox } from '../components/ui/checkbox';
 import { Progress } from '../components/ui/progress';
 import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
-import { mockScholarships } from '../lib/mock-data';
 import { toast } from 'sonner';
 
 export function ApplyPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const scholarship = mockScholarships.find(s => s.id === id);
+  const [scholarship, setScholarship] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,8 +30,43 @@ export function ApplyPage() {
     certify: false,
   });
 
-  if (!scholarship) {
-    return <div>Scholarship not found</div>;
+  useEffect(() => {
+    const fetchScholarship = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`http://localhost:5000/api/scholarships/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setScholarship(data.data);
+        } else {
+          throw new Error('Scholarship not found');
+        }
+      } catch (error) {
+        console.error('Error fetching scholarship:', error);
+        toast.error('Failed to load scholarship');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchScholarship();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8F9FC]">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-6 py-8 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1A2E5A]"></div>
+            <p className="mt-4 text-[#64748B]">Loading scholarship information...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   const handleFileUpload = (field: string, file: File | null) => {
@@ -73,18 +108,18 @@ export function ApplyPage() {
                   Application Submitted!
                 </h2>
                 <p className="text-[#64748B]">
-                  Your application for <span className="font-semibold text-[#1A2E5A]">{scholarship.name}</span> has been successfully submitted.
+                  Your application for <span className="font-semibold text-[#1A2E5A]">{scholarship.name || scholarship.ScholarshipName}</span> has been successfully submitted.
                 </p>
               </div>
 
               <div className="bg-[#F8F9FC] rounded-lg p-4 text-left space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-[#64748B]">Scholarship</span>
-                  <span className="font-medium text-[#1A2E5A]">{scholarship.name}</span>
+                  <span className="font-medium text-[#1A2E5A]">{scholarship.name || scholarship.ScholarshipName}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-[#64748B]">Provider</span>
-                  <span className="font-medium text-[#1A2E5A]">{scholarship.provider}</span>
+                  <span className="font-medium text-[#1A2E5A]">{scholarship.provider || scholarship.Provider}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-[#64748B]">Submitted</span>
@@ -139,7 +174,7 @@ export function ApplyPage() {
             <h1 style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl text-[#1A2E5A] mb-2">
               Apply for Scholarship
             </h1>
-            <p className="text-[#64748B] mb-4">{scholarship.name} • {scholarship.provider}</p>
+            <p className="text-[#64748B] mb-4">{scholarship.name || scholarship.ScholarshipName} • {scholarship.provider || scholarship.Provider}</p>
             
             {/* Progress Stepper */}
             <div className="space-y-4">

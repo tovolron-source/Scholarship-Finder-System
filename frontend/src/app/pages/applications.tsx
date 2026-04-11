@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Eye, X, FileText, Calendar, Building2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -7,11 +7,10 @@ import { Card, CardContent } from '../components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
-import { mockApplications } from '../lib/mock-data';
 import { toast } from 'sonner';
 
 export function ApplicationsPage() {
-  const [applications, setApplications] = useState(mockApplications);
+  const [applications, setApplications] = useState<any[]>([]);
 
   const getStatusBadge = (status: string) => {
     const styles = {
