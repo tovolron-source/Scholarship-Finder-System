@@ -64,7 +64,7 @@ export function ScholarshipDetailPage() {
         );
         if (response.ok) {
           const data = await response.json();
-          setIsSaved(data.data?.isFavorited || false);
+          setIsSaved(data?.isFavorited || false);
         }
       } catch (err) {
         console.error('Error checking favorite status:', err);
