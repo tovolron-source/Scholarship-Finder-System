@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent } from '../components/ui/card';
+import { handleRedirectWithSearchQuery } from '../lib/redirectWithSearchQuery';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -54,16 +55,7 @@ export function LoginPage() {
         },
       });
       
-      // Check for pending search query
-      const pendingQuery = localStorage.getItem('pendingSearchQuery');
-      let redirectUrl = '/search';
-      if (pendingQuery) {
-        redirectUrl = `/search?q=${encodeURIComponent(pendingQuery)}`;
-        localStorage.removeItem('pendingSearchQuery');
-      }
-      
-      // Navigate to search after 1.5 seconds
-      setTimeout(() => navigate(redirectUrl), 1500);
+      handleRedirectWithSearchQuery(navigate);
     } catch (error) {
       console.error('Google sign-in error:', error);
       toast.error('Google Sign-In failed', {
@@ -146,16 +138,7 @@ export function LoginPage() {
         },
       });
       
-      // Check for pending search query
-      const pendingQuery = localStorage.getItem('pendingSearchQuery');
-      let redirectUrl = '/search';
-      if (pendingQuery) {
-        redirectUrl = `/search?q=${encodeURIComponent(pendingQuery)}`;
-        localStorage.removeItem('pendingSearchQuery');
-      }
-      
-      // Navigate to search after 1.5 seconds
-      setTimeout(() => navigate(redirectUrl), 1500);
+      handleRedirectWithSearchQuery(navigate);
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Login failed', {

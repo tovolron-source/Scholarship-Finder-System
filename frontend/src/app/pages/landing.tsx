@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Search, Users, Award, TrendingUp, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Search, Users, Award, TrendingUp, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -11,7 +11,6 @@ export function LandingPage() {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [featuredScholarships, setFeaturedScholarships] = useState<any[]>([]);
 
   useEffect(() => {
@@ -19,10 +18,6 @@ export function LandingPage() {
     const storedUser = localStorage.getItem('user');
     const isLogged = !!(token && storedUser);
     setIsLoggedIn(isLogged);
-    
-    if (isLogged && storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
 
     // Fetch all scholarships from API
     const fetchScholarships = async () => {

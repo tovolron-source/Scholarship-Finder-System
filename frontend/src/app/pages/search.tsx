@@ -1,6 +1,6 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { Search, SlidersHorizontal, Heart, X, ChevronDown, Plus } from 'lucide-react';
+import { Search, SlidersHorizontal, Heart, X, Plus } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
 import { toast } from 'sonner';
+import { scholarshipMapper } from '../lib/scholarshipMapper';
 
 // FilterSection Component - Memoized to prevent re-renders causing focus loss
 const FilterSection = memo(({
@@ -252,10 +253,8 @@ export function SearchPage() {
   const getEligibilityStatus = (scholarship: any) => {
     if (!user || !user.GPA || !user.Course) return 'partial';
     
-    // Handle both database and mock data formats
-    const gpaRequirement = scholarship.gpaRequirement || scholarship.GPARequirement || 0;
-    const eligReqs = scholarship.eligibilityRequirements || 
-                     (scholarship.EligibilityRequirements ? JSON.parse(scholarship.EligibilityRequirements) : {});
+    const gpaRequirement = scholarshipMapper.getGpaRequirement(scholarship);
+    const eligReqs = scholarshipMapper.getEligibilityRequirements(scholarship);
     
     const meetsGPA = user.GPA >= gpaRequirement;
     const courses = eligReqs.courses || [];
@@ -269,14 +268,12 @@ export function SearchPage() {
   };
 
   const filteredScholarships = scholarships.filter(scholarship => {
-    // Handle both database and mock data formats
-    const name = scholarship.name || scholarship.ScholarshipName || '';
-    const provider = scholarship.provider || scholarship.Provider || '';
-    const description = scholarship.description || scholarship.Description || '';
-    const type = scholarship.type || scholarship.Type || '';
-    const gpaRequirement = scholarship.gpaRequirement || scholarship.GPARequirement || 0;
-    const eligReqs = scholarship.eligibilityRequirements || 
-                     (scholarship.EligibilityRequirements ? JSON.parse(scholarship.EligibilityRequirements) : {});
+    const name = scholarshipMapper.getName(scholarship);
+    const provider = scholarshipMapper.getProvider(scholarship);
+    const description = scholarshipMapper.getDescription(scholarship);
+    const type = scholarshipMapper.getType(scholarship);
+    const gpaRequirement = scholarshipMapper.getGpaRequirement(scholarship);
+    const eligReqs = scholarshipMapper.getEligibilityRequirements(scholarship);
 
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -512,15 +509,18 @@ export function SearchPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredScholarships.map((scholarship) => {
                   const eligibility = getEligibilityStatus(scholarship);
-                  const scholarshipId = String(scholarship.id || scholarship.ScholarshipID);
-                  const name = scholarship.name || scholarship.ScholarshipName || '';
-                  const provider = scholarship.provider || scholarship.Provider || '';
-                  const description = scholarship.description || scholarship.Description || '';
-                  const type = scholarship.type || scholarship.Type || '';
-                  const gpaRequirement = scholarship.gpaRequirement || scholarship.GPARequirement || '';
-                  const slots = scholarship.slots || scholarship.Slots || '';
-                  const amount = scholarship.amount || scholarship.Amount || '';
-                  const deadline = scholarship.deadline || scholarship.Deadline || '';
+                  const {
+                    id: scholarshipId,
+                    name,
+                    provider,
+                    description,
+                    type,
+                    gpaRequirement,
+                    slots,
+                    amount,
+                    deadline,
+                  } = scholarshipMapper.getScholarshipData(scholarship);
+                  
                   const isSaved = savedScholarships.includes(scholarshipId);
                   
                   return (

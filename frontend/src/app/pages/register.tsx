@@ -9,6 +9,7 @@ import { Label } from '../components/ui/label';
 import { Checkbox } from '../components/ui/checkbox';
 import { Card, CardContent } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
+import { handleRedirectWithSearchQuery } from '../lib/redirectWithSearchQuery';
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -60,16 +61,7 @@ export function RegisterPage() {
         },
       });
       
-      // Check for pending search query
-      const pendingQuery = localStorage.getItem('pendingSearchQuery');
-      let redirectUrl = '/search';
-      if (pendingQuery) {
-        redirectUrl = `/search?q=${encodeURIComponent(pendingQuery)}`;
-        localStorage.removeItem('pendingSearchQuery');
-      }
-      
-      // Navigate to search after 1.5 seconds
-      setTimeout(() => navigate(redirectUrl), 1500);
+      handleRedirectWithSearchQuery(navigate);
     } catch (error) {
       console.error('Google sign-up error:', error);
       toast.error('Google Sign-Up failed', {
