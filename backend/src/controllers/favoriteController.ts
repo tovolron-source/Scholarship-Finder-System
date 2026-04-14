@@ -5,9 +5,9 @@ import pool from '../config/database';
 export async function getFavoritesByStudent(req: Request, res: Response) {
   let connection;
   try {
-    let userId = req.query.userId || req.body.userId;
+    const userIdParam = req.query.userId || req.body.userId;
 
-    if (!userId) {
+    if (!userIdParam) {
       return res.status(400).json({
         success: false,
         message: 'UserId is required'
@@ -15,7 +15,7 @@ export async function getFavoritesByStudent(req: Request, res: Response) {
     }
 
     // Convert to number if it's a string
-    userId = parseInt(String(userId), 10);
+    const userId = parseInt(String(userIdParam), 10);
 
     // Validate that conversion was successful
     if (!Number.isFinite(userId)) {
@@ -60,9 +60,9 @@ export async function getFavoritesByStudent(req: Request, res: Response) {
 export async function checkIsFavorited(req: Request, res: Response) {
   let connection;
   try {
-    let { userId, scholarshipId } = req.query;
+    const { userId: userIdParam, scholarshipId: scholarshipIdParam } = req.query;
 
-    if (!userId || !scholarshipId) {
+    if (!userIdParam || !scholarshipIdParam) {
       return res.status(400).json({
         success: false,
         message: 'UserId and ScholarshipId are required'
@@ -70,8 +70,8 @@ export async function checkIsFavorited(req: Request, res: Response) {
     }
 
     // Convert to numbers if they're strings
-    userId = parseInt(String(userId), 10);
-    scholarshipId = parseInt(String(scholarshipId), 10);
+    const userId = parseInt(String(userIdParam), 10);
+    const scholarshipId = parseInt(String(scholarshipIdParam), 10);
 
     // Validate that conversion was successful
     if (!Number.isFinite(userId) || !Number.isFinite(scholarshipId)) {
@@ -107,18 +107,18 @@ export async function checkIsFavorited(req: Request, res: Response) {
 export async function addFavorite(req: Request, res: Response) {
   let connection;
   try {
-    let { userId, scholarshipId } = req.body;
+    const { userId: userIdParam, scholarshipId: scholarshipIdParam } = req.body;
 
-    if (!userId || !scholarshipId) {
+    if (!userIdParam || !scholarshipIdParam) {
       return res.status(400).json({
         success: false,
         message: 'UserId and ScholarshipId are required'
       });
     }
 
-    // Convert to numbers if they're strings
-    userId = parseInt(String(userId), 10);
-    scholarshipId = parseInt(String(scholarshipId), 10);
+    // Convert to numbers
+    const userId = parseInt(String(userIdParam), 10);
+    const scholarshipId = parseInt(String(scholarshipIdParam), 10);
 
     // Validate that conversion was successful
     if (!Number.isFinite(userId) || !Number.isFinite(scholarshipId)) {
@@ -181,18 +181,18 @@ export async function addFavorite(req: Request, res: Response) {
 export async function removeFavorite(req: Request, res: Response) {
   let connection;
   try {
-    let { userId, scholarshipId } = req.body;
+    const { userId: userIdParam, scholarshipId: scholarshipIdParam } = req.body;
 
-    if (!userId || !scholarshipId) {
+    if (!userIdParam || !scholarshipIdParam) {
       return res.status(400).json({
         success: false,
         message: 'UserId and ScholarshipId are required'
       });
     }
 
-    // Convert to numbers if they're strings
-    userId = parseInt(String(userId), 10);
-    scholarshipId = parseInt(String(scholarshipId), 10);
+    // Convert to numbers
+    const userId = parseInt(String(userIdParam), 10);
+    const scholarshipId = parseInt(String(scholarshipIdParam), 10);
 
     // Validate that conversion was successful
     if (!Number.isFinite(userId) || !Number.isFinite(scholarshipId)) {
