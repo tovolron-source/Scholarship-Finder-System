@@ -60,8 +60,16 @@ export function RegisterPage() {
         },
       });
       
+      // Check for pending search query
+      const pendingQuery = localStorage.getItem('pendingSearchQuery');
+      let redirectUrl = '/search';
+      if (pendingQuery) {
+        redirectUrl = `/search?q=${encodeURIComponent(pendingQuery)}`;
+        localStorage.removeItem('pendingSearchQuery');
+      }
+      
       // Navigate to search after 1.5 seconds
-      setTimeout(() => navigate('/search'), 1500);
+      setTimeout(() => navigate(redirectUrl), 1500);
     } catch (error) {
       console.error('Google sign-up error:', error);
       toast.error('Google Sign-Up failed', {

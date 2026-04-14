@@ -1,5 +1,5 @@
 import { useState, useEffect, memo, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Search, SlidersHorizontal, Heart, X, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -143,9 +143,10 @@ const FilterSection = memo(({
 
 export function SearchPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('relevance');
-  const [gpaRange, setGpaRange] = useState([2.0, 4.0]);
+  const [gpaRange, setGpaRange] = useState<[number, number]>([2.0, 4.0]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [savedScholarships, setSavedScholarships] = useState<string[]>([]);
@@ -158,7 +159,7 @@ export function SearchPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load user from localStorage
+  // Load user from localStorage and handle search query
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
@@ -169,7 +170,19 @@ export function SearchPage() {
     }
 
     setUser(JSON.parse(storedUser));
-  }, [navigate]);
+
+    // Check for search query from URL parameter or localStorage
+    const urlQuery = searchParams.get('q');
+    const pendingQuery = localStorage.getItem('pendingSearchQuery');
+
+    if (urlQuery) {
+      setSearchQuery(decodeURIComponent(urlQuery));
+    } else if (pendingQuery) {
+      setSearchQuery(pendingQuery);
+      // Clear the pending query after using it
+      localStorage.removeItem('pendingSearchQuery');
+    }
+  }, [navigate, searchParams]);
 
   // Fetch scholarships from API
   useEffect(() => {

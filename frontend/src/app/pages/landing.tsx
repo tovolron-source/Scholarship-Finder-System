@@ -9,7 +9,7 @@ import { Footer } from '../components/layout/footer';
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const [searchInput] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [featuredScholarships, setFeaturedScholarships] = useState<any[]>([]);
@@ -105,11 +105,18 @@ export function LandingPage() {
     const user = localStorage.getItem('user');
 
     if (!token || !user) {
-      // User is not logged in, redirect to sign in
+      // User is not logged in, store search query and redirect to sign in
+      if (searchInput.trim()) {
+        localStorage.setItem('pendingSearchQuery', searchInput.trim());
+      }
       navigate('/login');
     } else {
-      // User is logged in, go to search
-      navigate('/search');
+      // User is logged in, go to search with query parameter
+      if (searchInput.trim()) {
+        navigate(`/search?q=${encodeURIComponent(searchInput.trim())}`);
+      } else {
+        navigate('/search');
+      }
     }
   };
 
@@ -135,6 +142,9 @@ export function LandingPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   placeholder="Search by scholarship name, field of study..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   className="pl-10 h-12 bg-white text-[#1A2E5A] border-0"
                 />
               </div>
