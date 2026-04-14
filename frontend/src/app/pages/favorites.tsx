@@ -60,7 +60,7 @@ export function FavoritesPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.id,
+          userId: parseInt(String(user.id)),
           scholarshipId,
         }),
       });

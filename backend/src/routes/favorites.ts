@@ -21,3 +21,4 @@ router.post('/', addFavorite);
 router.delete('/', removeFavorite);
 
 export default router;
+
