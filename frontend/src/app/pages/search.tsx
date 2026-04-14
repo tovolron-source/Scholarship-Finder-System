@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Search, SlidersHorizontal, Heart, X, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -11,6 +11,135 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
 import { toast } from 'sonner';
+
+// FilterSection Component - Memoized to prevent re-renders causing focus loss
+const FilterSection = memo(({
+  scholarshipTypes,
+  defaultCourses,
+  selectedTypes,
+  selectedCourses,
+  gpaRange,
+  newCourse,
+  showAddCourse,
+  onGpaChange,
+  onTypeChange,
+  onCourseChange,
+  onAddCourse,
+  onClearFilters,
+  onShowAddCourse,
+  onNewCourseChange,
+}: {
+  scholarshipTypes: string[];
+  defaultCourses: string[];
+  selectedTypes: string[];
+  selectedCourses: string[];
+  gpaRange: [number, number];
+  newCourse: string;
+  showAddCourse: boolean;
+  onGpaChange: (value: number) => void;
+  onTypeChange: (type: string, checked: boolean) => void;
+  onCourseChange: (course: string, checked: boolean) => void;
+  onAddCourse: () => void;
+  onClearFilters: () => void;
+  onShowAddCourse: (show: boolean) => void;
+  onNewCourseChange: (value: string) => void;
+}) => (
+  <div className="space-y-6">
+    <div>
+      <h3 className="font-semibold text-[#1A2E5A] mb-3">GPA Requirement</h3>
+      <div className="space-y-3">
+        <Slider
+          value={[gpaRange[1]]}
+          onValueChange={(value) => onGpaChange(value[0])}
+          min={2.0}
+          max={4.0}
+          step={0.1}
+          className="w-full"
+        />
+        <div className="flex items-center justify-between text-sm text-[#64748B]">
+          <span>Min: 2.0</span>
+          <span>Max: {gpaRange[1].toFixed(1)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h3 className="font-semibold text-[#1A2E5A] mb-3">Scholarship Type</h3>
+      <div className="space-y-2">
+        {scholarshipTypes.map((type) => (
+          <div key={type} className="flex items-center gap-2">
+            <Checkbox
+              id={`type-${type}`}
+              checked={selectedTypes.includes(type)}
+              onCheckedChange={(checked) => onTypeChange(type, !!checked)}
+            />
+            <label htmlFor={`type-${type}`} className="text-sm text-[#64748B] cursor-pointer">
+              {type}
+            </label>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-[#1A2E5A]">Course/Field of Study</h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onShowAddCourse(!showAddCourse)}
+          className="text-[#1A2E5A] p-0 h-auto"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      
+      {showAddCourse && (
+        <div className="mb-3 space-y-2 pb-3 border-b">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Add new course..."
+              value={newCourse}
+              onChange={(e) => onNewCourseChange(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && onAddCourse()}
+              className="text-sm"
+            />
+            <Button
+              size="sm"
+              onClick={onAddCourse}
+              className="bg-[#1A2E5A] text-white"
+            >
+              Add
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      <div className="space-y-2 max-h-80 overflow-y-auto">
+        {defaultCourses.map((course) => (
+          <div key={course} className="flex items-center gap-2">
+            <Checkbox
+              id={`course-${course}`}
+              checked={selectedCourses.includes(course)}
+              onCheckedChange={(checked) => onCourseChange(course, !!checked)}
+            />
+            <label htmlFor={`course-${course}`} className="text-sm text-[#64748B] cursor-pointer">
+              {course}
+            </label>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <Button
+      variant="outline"
+      className="w-full"
+      onClick={onClearFilters}
+    >
+      Clear All Filters
+    </Button>
+  </div>
+));
 
 export function SearchPage() {
   const navigate = useNavigate();
@@ -196,115 +325,30 @@ export function SearchPage() {
     toast.success('All filters cleared');
   };
 
-  const FilterSection = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="font-semibold text-[#1A2E5A] mb-3">GPA Requirement</h3>
-        <div className="space-y-3">
-          <Slider
-            value={[gpaRange[1]]}
-            onValueChange={(value) => setGpaRange([2.0, value[0]])}
-            min={2.0}
-            max={4.0}
-            step={0.1}
-            className="w-full"
-          />
-          <div className="flex items-center justify-between text-sm text-[#64748B]">
-            <span>Min: 2.0</span>
-            <span>Max: {gpaRange[1].toFixed(1)}</span>
-          </div>
-        </div>
-      </div>
+  // Memoized handlers for FilterSection
+  const handleGpaChange = useCallback((value: number) => {
+    setGpaRange([2.0, value]);
+  }, []);
 
-      <div>
-        <h3 className="font-semibold text-[#1A2E5A] mb-3">Scholarship Type</h3>
-        <div className="space-y-2">
-          {scholarshipTypes.map((type) => (
-            <div key={type} className="flex items-center gap-2">
-              <Checkbox
-                id={`type-${type}`}
-                checked={selectedTypes.includes(type)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedTypes([...selectedTypes, type]);
-                  } else {
-                    setSelectedTypes(selectedTypes.filter(t => t !== type));
-                  }
-                }}
-              />
-              <label htmlFor={`type-${type}`} className="text-sm text-[#64748B] cursor-pointer">
-                {type}
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
+  const handleTypeChange = useCallback((type: string, checked: boolean) => {
+    setSelectedTypes(prev => 
+      checked ? [...prev, type] : prev.filter(t => t !== type)
+    );
+  }, []);
 
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-[#1A2E5A]">Course/Field of Study</h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAddCourse(!showAddCourse)}
-            className="text-[#1A2E5A] p-0 h-auto"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {showAddCourse && (
-          <div className="mb-3 space-y-2 pb-3 border-b">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add new course..."
-                value={newCourse}
-                onChange={(e) => setNewCourse(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddCourse()}
-                className="text-sm"
-              />
-              <Button
-                size="sm"
-                onClick={handleAddCourse}
-                className="bg-[#1A2E5A] text-white"
-              >
-                Add
-              </Button>
-            </div>
-          </div>
-        )}
-        
-        <div className="space-y-2 max-h-80 overflow-y-auto">
-          {defaultCourses.map((course) => (
-            <div key={course} className="flex items-center gap-2">
-              <Checkbox
-                id={`course-${course}`}
-                checked={selectedCourses.includes(course)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedCourses([...selectedCourses, course]);
-                  } else {
-                    setSelectedCourses(selectedCourses.filter(c => c !== course));
-                  }
-                }}
-              />
-              <label htmlFor={`course-${course}`} className="text-sm text-[#64748B] cursor-pointer">
-                {course}
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
+  const handleCourseChange = useCallback((course: string, checked: boolean) => {
+    setSelectedCourses(prev => 
+      checked ? [...prev, course] : prev.filter(c => c !== course)
+    );
+  }, []);
 
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={handleClearAllFilters}
-      >
-        Clear All Filters
-      </Button>
-    </div>
-  );
+  const handleShowAddCourse = useCallback((show: boolean) => {
+    setShowAddCourse(show);
+  }, []);
+
+  const handleNewCourseChange = useCallback((value: string) => {
+    setNewCourse(value);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FC]">
@@ -394,7 +438,22 @@ export function SearchPage() {
                   <h3 className="font-semibold text-[#1A2E5A]">Filters</h3>
                   <SlidersHorizontal className="h-4 w-4 text-[#64748B]" />
                 </div>
-                <FilterSection />
+                <FilterSection
+                  scholarshipTypes={scholarshipTypes}
+                  defaultCourses={defaultCourses}
+                  selectedTypes={selectedTypes}
+                  selectedCourses={selectedCourses}
+                  gpaRange={gpaRange}
+                  newCourse={newCourse}
+                  showAddCourse={showAddCourse}
+                  onGpaChange={handleGpaChange}
+                  onTypeChange={handleTypeChange}
+                  onCourseChange={handleCourseChange}
+                  onAddCourse={handleAddCourse}
+                  onClearFilters={handleClearAllFilters}
+                  onShowAddCourse={handleShowAddCourse}
+                  onNewCourseChange={handleNewCourseChange}
+                />
               </CardContent>
             </Card>
           </aside>
