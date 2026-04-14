@@ -11,30 +11,93 @@ export function LandingPage() {
   const navigate = useNavigate();
   const [searchInput] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [featuredScholarships, setFeaturedScholarships] = useState<any[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    setIsLoggedIn(!!(token && user));
+    const storedUser = localStorage.getItem('user');
+    const isLogged = !!(token && storedUser);
+    setIsLoggedIn(isLogged);
+    
+    if (isLogged && storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
 
-    // Fetch featured scholarships from API
-    const fetchFeaturedScholarships = async () => {
+    // Fetch all scholarships from API
+    const fetchScholarships = async () => {
       try {
         const response = await fetch('http://localhost:5000/api/scholarships');
         if (response.ok) {
           const data = await response.json();
-          // Get first 3 scholarships as featured
-          setFeaturedScholarships((data.data || []).slice(0, 3));
+          const allScholarships = data.data || [];
+          
+          let scholarshipsToDisplay = allScholarships;
+          
+          // If logged in, filter by user eligibility, otherwise just get first 3
+          if (isLogged && storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+            scholarshipsToDisplay = filterMatchedScholarships(allScholarships, parsedUser);
+          }
+          
+          // Get first 3 scholarships to display
+          setFeaturedScholarships(scholarshipsToDisplay.slice(0, 3));
         }
       } catch (error) {
-        console.error('Error fetching featured scholarships:', error);
+        console.error('Error fetching scholarships:', error);
         setFeaturedScholarships([]);
       }
     };
 
-    fetchFeaturedScholarships();
+    fetchScholarships();
   }, []);
+
+  const filterMatchedScholarships = (scholarships: any[], userProfile: any) => {
+    const userGPA = userProfile.GPA || userProfile.gpa || 0;
+    const userCourse = userProfile.Course || userProfile.course || '';
+    const userYearLevel = userProfile.YearLevel || userProfile.yearLevel || '';
+    
+    return scholarships.filter(scholarship => {
+      // Get GPA requirement
+      const scholarshipGPA = scholarship.GPARequirement || scholarship.gpaRequirement || 0;
+      
+      // Check GPA eligibility - user's GPA must be >= scholarship requirement
+      const meetsGPA = userGPA >= scholarshipGPA;
+      
+      if (!meetsGPA) {
+        return false;
+      }
+      
+      // Get eligibility requirements
+      let eligReqs: any = {};
+      if (scholarship.EligibilityRequirements) {
+        try {
+          eligReqs = typeof scholarship.EligibilityRequirements === 'string' 
+            ? JSON.parse(scholarship.EligibilityRequirements) 
+            : scholarship.EligibilityRequirements;
+        } catch (e) {
+          eligReqs = {};
+        }
+      }
+      
+      // Check course eligibility
+      const requiredCourses = eligReqs.courses || [];
+      const meetsCourse = requiredCourses.length === 0 || 
+                         requiredCourses.includes('All Programs') || 
+                         requiredCourses.includes(userCourse);
+      
+      if (!meetsCourse) {
+        return false;
+      }
+      
+      // Check year level eligibility
+      const requiredYearLevels = eligReqs.yearLevel || [];
+      const meetsYearLevel = requiredYearLevels.length === 0 || 
+                            requiredYearLevels.includes(userYearLevel);
+      
+      return meetsYearLevel;
+    });
+  };
 
   const handleSearch = () => {
     // Check if user is logged in by checking localStorage for token
