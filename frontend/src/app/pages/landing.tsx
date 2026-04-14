@@ -97,7 +97,8 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Strip */}
+      {/* Stats Strip - Only show when not logged in */}
+      {!isLoggedIn && (
       <section className="bg-white border-b shadow-sm">
         <div className="container mx-auto px-6 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
@@ -125,16 +126,20 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+      )}
 
-      {/* Featured Scholarships */}
+      {/* Featured/Matched Scholarships */}
       <section className="py-16 bg-[#F8F9FC]">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
             <h2 style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl md:text-4xl text-[#1A2E5A] mb-4">
-              Featured Scholarships
+              {isLoggedIn ? 'Matched Scholarships' : 'Featured Scholarships'}
             </h2>
             <p className="text-[#64748B] max-w-2xl mx-auto">
-              Discover top scholarship opportunities handpicked for students like you
+              {isLoggedIn 
+                ? 'Scholarships matched to your profile and eligibility criteria'
+                : 'Discover top scholarship opportunities handpicked for students like you'
+              }
             </p>
           </div>
 

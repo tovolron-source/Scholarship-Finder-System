@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { Camera, Save } from 'lucide-react';
+import { Camera, Save, LogOut } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -320,6 +320,12 @@ export function ProfilePage() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FC]">
       <Navbar />
@@ -399,6 +405,19 @@ export function ProfilePage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Mobile Logout Button */}
+        <div className="md:hidden mb-6">
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="w-full text-[#E74C3C] border-[#E74C3C] hover:bg-[#E74C3C] hover:text-white"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
+
         {/* Photo Upload Section */}
         {selectedFile && (
           <div className="mb-6">
@@ -667,19 +686,9 @@ export function ProfilePage() {
           </TabsContent>
         </Tabs>
 
-          <div className="flex justify-end mt-6">
-            <Button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {isSaving ? 'Saving profile...' : 'Save all profile changes'}
-            </Button>
-          </div>
-        </>
-        )}
-      </main>
+      </>
+      )}
+    </main>
 
       <Footer />
     </div>
