@@ -374,7 +374,8 @@ export function ScholarshipDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Eligibility Match Panel */}
+            {/* Eligibility Match Panel - Only for Students */}
+            {user?.role !== 'admin' && (
             <Card>
               <CardHeader>
                 <CardTitle>Your Match Score</CardTitle>
@@ -507,18 +508,94 @@ export function ScholarshipDetailPage() {
                 </div>
               </CardContent>
             </Card>
+            )}
+            
+            {/* Admin View - Quick Info Only */}
+            {user?.role === 'admin' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Info</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b">
+                  <div className="w-10 h-10 bg-[#F5A623]/10 rounded-lg flex items-center justify-center">
+                    <Award className="h-5 w-5 text-[#F5A623]" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#64748B]">Amount</p>
+                    <p className="font-semibold text-[#1A2E5A]">{scholarship.amount || scholarship.Amount}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 pb-3 border-b">
+                  <div className="w-10 h-10 bg-[#2ECC71]/10 rounded-lg flex items-center justify-center">
+                    <Users className="h-5 w-5 text-[#2ECC71]" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#64748B]">Available Slots</p>
+                    <p className="font-semibold text-[#1A2E5A]">{scholarship.slots || scholarship.Slots} positions</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 pb-3 border-b">
+                  <div className="w-10 h-10 bg-[#E74C3C]/10 rounded-lg flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-[#E74C3C]" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#64748B]">Deadline</p>
+                    <p className="font-semibold text-[#1A2E5A]">
+                      {new Date(scholarship.deadline || scholarship.Deadline).toLocaleDateString('en-US', { 
+                        month: 'long', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-[#64748B] mb-1">Provider Contact</p>
+                  <p className="text-sm font-medium text-[#1A2E5A]">{scholarship.providerContact || scholarship.ProviderContact}</p>
+                </div>
+
+                <div className="space-y-2 pt-4 border-t">
+                  <Button asChild size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
+                    <Link to={`/admin/edit-scholarship/${scholarship.id || scholarship.ScholarshipID}`}>Edit Scholarship</Link>
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={toggleSave}>
+                    <Heart className={`mr-2 h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
+                    {isSaved ? 'Remove' : 'Add to Favorites'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            )}
           </div>
         </div>
 
         {/* Mobile Sticky Bottom Bar */}
         <div className="lg:hidden fixed bottom-16 left-0 right-0 bg-white border-t shadow-lg p-4 z-40">
           <div className="flex gap-2">
-            <Button asChild className="flex-1 bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white">
-              <Link to={`/apply/${scholarship.id || scholarship.ScholarshipID}`}>Apply Now</Link>
-            </Button>
-            <Button variant="outline" size="icon" onClick={toggleSave}>
-              <Heart className={`h-5 w-5 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
-            </Button>
+            {user?.role !== 'admin' && (
+              <>
+                <Button asChild className="flex-1 bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white">
+                  <Link to={`/apply/${scholarship.id || scholarship.ScholarshipID}`}>Apply Now</Link>
+                </Button>
+                <Button variant="outline" size="icon" onClick={toggleSave}>
+                  <Heart className={`h-5 w-5 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
+                </Button>
+              </>
+            )}
+            {user?.role === 'admin' && (
+              <>
+                <Button asChild className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                  <Link to={`/admin/edit-scholarship/${scholarship.id || scholarship.ScholarshipID}`}>Edit</Link>
+                </Button>
+                <Button variant="outline" size="icon" onClick={toggleSave}>
+                  <Heart className={`h-5 w-5 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </main>
