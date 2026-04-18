@@ -6,6 +6,8 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Navbar } from '../../components/layout/navbar';
+import { Footer } from '../../components/layout/footer';
 import { toast } from 'sonner';
 
 export function AdminAccountSettingsPage() {
@@ -159,8 +161,9 @@ export function AdminAccountSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-2xl mx-auto px-4">
+    <div className="min-h-screen flex flex-col bg-[#F8F9FC]">
+      <Navbar />
+      <main className="flex-1 container mx-auto px-6 py-8 pb-24 md:pb-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -336,7 +339,8 @@ export function AdminAccountSettingsPage() {
             </Tabs>
           </CardContent>
         </Card>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }
