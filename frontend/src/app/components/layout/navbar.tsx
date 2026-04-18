@@ -60,51 +60,84 @@ export function Navbar() {
             </Link>
 
             <div className="flex items-center gap-8">
-              <Link
-                to="/"
-                className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
-                  location.pathname === '/' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
-                }`}
-              >
-                Home
-              </Link>
-              <Link
-                to="/search"
-                className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
-                  location.pathname === '/search' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
-                }`}
-              >
-                Search
-              </Link>
-              <Link
-                to="/applications"
-                className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
-                  location.pathname === '/applications' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
-                }`}
-              >
-                My Applications
-              </Link>
-              <Link
-                to="/favorites"
-                className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
-                  location.pathname === '/favorites' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
-                }`}
-              >
-                Favorites
-              </Link>
+              {user?.role === 'admin' ? (
+                <>
+                  <Link
+                    to="/admin/dashboard"
+                    className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
+                      location.pathname === '/admin/dashboard' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/admin/dashboard"
+                    className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
+                      location.pathname === '/admin/dashboard' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
+                    }`}
+                  >
+                    Scholarships
+                  </Link>
+                  <Link
+                    to="/favorites"
+                    className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
+                      location.pathname === '/favorites' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
+                    }`}
+                  >
+                    Favorites
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/"
+                    className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
+                      location.pathname === '/' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
+                    }`}
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    to="/search"
+                    className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
+                      location.pathname === '/search' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
+                    }`}
+                  >
+                    Search
+                  </Link>
+                  <Link
+                    to="/applications"
+                    className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
+                      location.pathname === '/applications' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
+                    }`}
+                  >
+                    My Applications
+                  </Link>
+                  <Link
+                    to="/favorites"
+                    className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
+                      location.pathname === '/favorites' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
+                    }`}
+                  >
+                    Favorites
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-3">
-              <Link to="/notifications">
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-[#E74C3C] text-white text-xs">
-                      {unreadCount}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
+              {user?.role !== 'admin' && (
+                <Link to="/notifications">
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-[#E74C3C] text-white text-xs">
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -122,15 +155,26 @@ export function Navbar() {
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium">{user?.Name || user?.FullName || 'User'}</p>
                       <p className="text-xs text-muted-foreground">{user?.Email || ''}</p>
+                      {user?.role === 'admin' && (
+                        <Badge className="w-fit bg-blue-600">Admin</Badge>
+                      )}
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile">Profile Settings</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/notifications">Notifications</Link>
-                  </DropdownMenuItem>
+                  {user?.role === 'admin' ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/account-settings">Account Settings</Link>
+                    </DropdownMenuItem>
+                  ) : (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/profile">Profile Settings</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/notifications">Notifications</Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
@@ -146,42 +190,67 @@ export function Navbar() {
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-white shadow-lg">
         <div className="flex items-center justify-around px-2 py-3">
-          <Link to="/" className="flex flex-col items-center gap-1">
-            <Home className={`h-5 w-5 ${location.pathname === '/' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
-            <span className={`text-xs ${location.pathname === '/' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
-              Home
-            </span>
-          </Link>
-          <Link to="/search" className="flex flex-col items-center gap-1">
-            <Search className={`h-5 w-5 ${location.pathname === '/search' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
-            <span className={`text-xs ${location.pathname === '/search' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
-              Search
-            </span>
-          </Link>
-          <Link to="/applications" className="flex flex-col items-center gap-1">
-            <FileText className={`h-5 w-5 ${location.pathname === '/applications' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
-            <span className={`text-xs ${location.pathname === '/applications' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
-              Applications
-            </span>
-          </Link>
-          <Link to="/favorites" className="flex flex-col items-center gap-1">
-            <Heart className={`h-5 w-5 ${location.pathname === '/favorites' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
-            <span className={`text-xs ${location.pathname === '/favorites' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
-              Favorites
-            </span>
-          </Link>
-          <Link to="/profile" className="flex flex-col items-center gap-1 relative">
-            <User className={`h-5 w-5 ${location.pathname === '/profile' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
-            <span className={`text-xs ${location.pathname === '/profile' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
-              Profile
-            </span>
-          </Link>
+          {user?.role === 'admin' ? (
+            <>
+              <Link to="/admin/dashboard" className="flex flex-col items-center gap-1">
+                <Home className={`h-5 w-5 ${location.pathname === '/admin/dashboard' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
+                <span className={`text-xs ${location.pathname === '/admin/dashboard' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
+                  Dashboard
+                </span>
+              </Link>
+              <Link to="/favorites" className="flex flex-col items-center gap-1">
+                <Heart className={`h-5 w-5 ${location.pathname === '/favorites' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
+                <span className={`text-xs ${location.pathname === '/favorites' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
+                  Favorites
+                </span>
+              </Link>
+              <Link to="/admin/account-settings" className="flex flex-col items-center gap-1">
+                <User className={`h-5 w-5 ${location.pathname === '/admin/account-settings' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
+                <span className={`text-xs ${location.pathname === '/admin/account-settings' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
+                  Settings
+                </span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/" className="flex flex-col items-center gap-1">
+                <Home className={`h-5 w-5 ${location.pathname === '/' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
+                <span className={`text-xs ${location.pathname === '/' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
+                  Home
+                </span>
+              </Link>
+              <Link to="/search" className="flex flex-col items-center gap-1">
+                <Search className={`h-5 w-5 ${location.pathname === '/search' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
+                <span className={`text-xs ${location.pathname === '/search' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
+                  Search
+                </span>
+              </Link>
+              <Link to="/applications" className="flex flex-col items-center gap-1">
+                <FileText className={`h-5 w-5 ${location.pathname === '/applications' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
+                <span className={`text-xs ${location.pathname === '/applications' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
+                  Applications
+                </span>
+              </Link>
+              <Link to="/favorites" className="flex flex-col items-center gap-1">
+                <Heart className={`h-5 w-5 ${location.pathname === '/favorites' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
+                <span className={`text-xs ${location.pathname === '/favorites' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
+                  Favorites
+                </span>
+              </Link>
+              <Link to="/profile" className="flex flex-col items-center gap-1 relative">
+                <User className={`h-5 w-5 ${location.pathname === '/profile' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
+                <span className={`text-xs ${location.pathname === '/profile' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
+                  Profile
+                </span>
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
       {/* Mobile Top Bar */}
       <div className="md:hidden sticky top-0 z-40 border-b bg-white shadow-sm px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to={user?.role === 'admin' ? '/admin/dashboard' : '/'} className="flex items-center gap-2">
           <div className="w-10 h-10 bg-[#1A2E5A] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">S</span>
           </div>
@@ -189,16 +258,18 @@ export function Navbar() {
             Scholarship Finder System
           </span>
         </Link>
-        <Link to="/notifications">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-[#E74C3C] text-white text-[10px]">
-                {unreadCount}
-              </Badge>
-            )}
-          </Button>
-        </Link>
+        {user?.role !== 'admin' && (
+          <Link to="/notifications">
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-[#E74C3C] text-white text-[10px]">
+                  {unreadCount}
+                </Badge>
+              )}
+            </Button>
+          </Link>
+        )}
       </div>
     </>
   );

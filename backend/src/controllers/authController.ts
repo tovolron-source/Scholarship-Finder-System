@@ -22,7 +22,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
     const connection = await pool.getConnection();
     const [users] = await connection.query(
-      'SELECT u.id, u.Email, u.Name, sp.gender, sp.address, sp.fullName, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?',
+      'SELECT u.id, u.Email, u.Name, u.role, sp.gender, sp.address, sp.fullName, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?',
       [userId]
     );
     connection.release();
@@ -364,7 +364,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     // Generate token
     const token = jwt.sign(
-      { id: insertId, email: email },
+      { id: insertId, email: email, role: 'student' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -372,7 +372,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Fetch the created user to return complete data
     const newConnection = await pool.getConnection();
     const [registeredUsers] = await newConnection.query(
-      'SELECT u.id, u.Email, u.Name, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
+      'SELECT u.id, u.Email, u.Name, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
       [email]
     );
     newConnection.release();
@@ -415,7 +415,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Find user with profile data
     const [users] = await connection.query(
-      'SELECT u.id, u.Email, u.Name, u.Password, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
+      'SELECT u.id, u.Email, u.Name, u.Password, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
       [email]
     );
 
@@ -446,10 +446,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     console.log('Password matched');
 
-    // Generate token
+    // Generate token with role
     console.log('Generating JWT token...');
     const token = jwt.sign(
-      { id: user.id, email: user.Email },
+      { id: user.id, email: user.Email, role: user.role || 'student' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -570,17 +570,17 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
     // Fetch user with profile data
     const newConnection = await pool.getConnection();
     const [usersWithProfile] = await newConnection.query(
-      'SELECT u.id, u.Email, u.Name, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
+      'SELECT u.id, u.Email, u.Name, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
       [email]
     );
     newConnection.release();
 
     const userWithProfile = (usersWithProfile as any[])[0];
 
-    // Generate JWT token
+    // Generate JWT token with role
     console.log('Generating JWT token...');
     const jwtToken = jwt.sign(
-      { id: userWithProfile.id, email: userWithProfile.Email },
+      { id: userWithProfile.id, email: userWithProfile.Email, role: userWithProfile.role || 'student' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -598,6 +598,158 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({ 
       success: false, 
       message: error instanceof Error ? error.message : 'Google login failed' 
+    });
+  }
+};
+
+export const changeEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.id;
+    const { newEmail, password } = req.body;
+
+    if (!userId || !newEmail || !password) {
+      res.status(400).json({
+        success: false,
+        message: 'User ID, new email, and current password are required'
+      });
+      return;
+    }
+
+    const connection = await pool.getConnection();
+
+    // Get current user
+    const [users] = await connection.query(
+      'SELECT * FROM user WHERE id = ?',
+      [userId]
+    );
+
+    const user = (users as any[])[0];
+    if (!user) {
+      connection.release();
+      res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+      return;
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(password, user.Password);
+    if (!isPasswordValid) {
+      connection.release();
+      res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+      return;
+    }
+
+    // Check if new email is already in use
+    const [existingEmail] = await connection.query(
+      'SELECT id FROM user WHERE Email = ? AND id <> ?',
+      [newEmail, userId]
+    );
+
+    if ((existingEmail as any[]).length > 0) {
+      connection.release();
+      res.status(409).json({
+        success: false,
+        message: 'Email is already in use'
+      });
+      return;
+    }
+
+    // Update email
+    await connection.query(
+      'UPDATE user SET Email = ? WHERE id = ?',
+      [newEmail, userId]
+    );
+
+    connection.release();
+
+    res.json({
+      success: true,
+      message: 'Email updated successfully'
+    });
+  } catch (error) {
+    console.error('Error changing email:', error);
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to change email'
+    });
+  }
+};
+
+export const changePassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.id;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!userId || !currentPassword || !newPassword || !confirmPassword) {
+      res.status(400).json({
+        success: false,
+        message: 'All fields are required'
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      res.status(400).json({
+        success: false,
+        message: 'New passwords do not match'
+      });
+      return;
+    }
+
+    const connection = await pool.getConnection();
+
+    // Get current user
+    const [users] = await connection.query(
+      'SELECT * FROM user WHERE id = ?',
+      [userId]
+    );
+
+    const user = (users as any[])[0];
+    if (!user) {
+      connection.release();
+      res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+      return;
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.Password);
+    if (!isPasswordValid) {
+      connection.release();
+      res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+      return;
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await connection.query(
+      'UPDATE user SET Password = ? WHERE id = ?',
+      [hashedPassword, userId]
+    );
+
+    connection.release();
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to change password'
     });
   }
 };

@@ -3,15 +3,7 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: { id: number; email: string; role?: string };
-    }
-  }
-}
-
-export const verifyToken = (req: Request, res: Response, next: NextFunction): void => {
+export const verifyAdminToken = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
 
@@ -23,7 +15,16 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction): vo
       return;
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; email: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; email: string; role?: string };
+    
+    if (decoded.role !== 'admin') {
+      res.status(403).json({ 
+        success: false, 
+        message: 'Admin access required' 
+      });
+      return;
+    }
+
     req.user = decoded;
     next();
   } catch (error) {

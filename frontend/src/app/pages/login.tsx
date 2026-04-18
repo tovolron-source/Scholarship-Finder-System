@@ -55,7 +55,13 @@ export function LoginPage() {
         },
       });
       
-      handleRedirectWithSearchQuery(navigate);
+      // Redirect based on role
+      const user = data.user;
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        handleRedirectWithSearchQuery(navigate);
+      }
     } catch (error) {
       console.error('Google sign-in error:', error);
       toast.error('Google Sign-In failed', {
@@ -138,7 +144,13 @@ export function LoginPage() {
         },
       });
       
-      handleRedirectWithSearchQuery(navigate);
+      // Redirect based on role
+      const user = data.user;
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        handleRedirectWithSearchQuery(navigate);
+      }
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Login failed', {

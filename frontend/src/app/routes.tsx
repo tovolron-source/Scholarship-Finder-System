@@ -9,6 +9,9 @@ import { DesignSystemPage } from './pages/design-system';
 import { NotificationsPage } from './pages/notifications';
 import { ScholarshipDetailPage } from './pages/scholarship-detail';
 import { FavoritesPage } from './pages/favorites';
+import { AdminDashboardPage } from './pages/admin/admin-dashboard';
+import { AdminAccountSettingsPage } from './pages/admin/admin-account-settings';
+import { CreateScholarshipPage } from './pages/admin/admin-scholarship-form';
 
 export const router = createBrowserRouter([
     {
@@ -43,7 +46,22 @@ export const router = createBrowserRouter([
         path: '/notifications',
         Component: NotificationsPage,
     },
-
+    {
+        path: '/admin/dashboard',
+        Component: AdminDashboardPage,
+    },
+    {
+        path: '/admin/account-settings',
+        Component: AdminAccountSettingsPage,
+    },
+    {
+        path: '/admin/create-scholarship',
+        Component: CreateScholarshipPage,
+    },
+    {
+        path: '/admin/edit-scholarship/:id',
+        Component: CreateScholarshipPage,
+    },
     {
         path: '/design-system',
         Component: DesignSystemPage,
