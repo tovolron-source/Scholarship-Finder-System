@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.googleLogin = exports.login = exports.register = exports.getStudentProfile = exports.uploadProfilePhoto = exports.updateUser = exports.getUserById = void 0;
+exports.changePassword = exports.changeEmail = exports.googleLogin = exports.login = exports.register = exports.getStudentProfile = exports.uploadProfilePhoto = exports.updateUser = exports.getUserById = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const google_auth_library_1 = require("google-auth-library");
@@ -22,7 +22,7 @@ const getUserById = async (req, res) => {
             return;
         }
         const connection = await database_1.default.getConnection();
-        const [users] = await connection.query('SELECT u.id, u.FullName, u.Email, u.Name, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?', [userId]);
+        const [users] = await connection.query('SELECT u.id, u.Email, u.Name, u.role, sp.gender, sp.address, sp.fullName, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?', [userId]);
         connection.release();
         const user = users[0];
         if (!user) {
@@ -47,20 +47,43 @@ const getUserById = async (req, res) => {
 };
 exports.getUserById = getUserById;
 // Helper function to create or update student profile
-const createOrUpdateStudentProfile = async (connection, userId, school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion) => {
+const createOrUpdateStudentProfile = async (connection, userId, fullName, gender, address, school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion) => {
     try {
         // Check if student profile exists
-        const [existingProfile] = await connection.query('SELECT id FROM student_profile WHERE userId = ?', [userId]);
-        if (existingProfile.length > 0) {
-            // Update existing profile
+        const [existingProfileRows] = await connection.query('SELECT * FROM student_profile WHERE userId = ?', [userId]);
+        const existingProfile = existingProfileRows[0];
+        if (existingProfile) {
+            const updatedFullName = fullName !== undefined ? fullName : existingProfile.fullName;
+            const updatedGender = gender !== undefined ? gender : existingProfile.gender;
+            const updatedAddress = address !== undefined ? address : existingProfile.address;
+            const updatedSchool = school !== undefined ? school : existingProfile.school;
+            const updatedCourse = course !== undefined ? course : existingProfile.course;
+            const updatedYearLevel = yearLevel !== undefined ? yearLevel : existingProfile.yearLevel;
+            const updatedGpa = typeof gpa === 'number' && Number.isFinite(gpa) ? gpa : existingProfile.gpa;
+            const updatedFinancialStatus = financialStatus !== undefined ? financialStatus : existingProfile.financialStatus;
+            const updatedContactNumber = contactNumber !== undefined ? contactNumber : existingProfile.contactNumber;
+            const updatedProfilePhoto = profilePhoto !== undefined ? profilePhoto : existingProfile.profilePhoto;
+            const updatedProfileCompletion = profileCompletion !== undefined ? profileCompletion : existingProfile.profileCompletion;
             await connection.query(`UPDATE student_profile SET
-          school = ?, course = ?, yearLevel = ?, gpa = ?, financialStatus = ?, contactNumber = ?, profilePhoto = ?, profileCompletion = ?
-        WHERE userId = ?`, [school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion, userId]);
+          fullName = ?, gender = ?, address = ?, school = ?, course = ?, yearLevel = ?, gpa = ?, financialStatus = ?, contactNumber = ?, profilePhoto = ?, profileCompletion = ?
+        WHERE userId = ?`, [
+                updatedFullName,
+                updatedGender,
+                updatedAddress,
+                updatedSchool,
+                updatedCourse,
+                updatedYearLevel,
+                updatedGpa,
+                updatedFinancialStatus,
+                updatedContactNumber,
+                updatedProfilePhoto,
+                updatedProfileCompletion,
+                userId
+            ]);
         }
         else {
-            // Create new student profile
-            await connection.query(`INSERT INTO student_profile (userId, school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, [userId, school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion]);
+            await connection.query(`INSERT INTO student_profile (userId, fullName, gender, address, school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [userId, fullName, gender, address, school, course, yearLevel, typeof gpa === 'number' && Number.isFinite(gpa) ? gpa : null, financialStatus, contactNumber, profilePhoto, profileCompletion]);
         }
     }
     catch (error) {
@@ -71,7 +94,12 @@ const createOrUpdateStudentProfile = async (connection, userId, school, course, 
 const updateUser = async (req, res) => {
     try {
         const userId = req.params.id;
-        const { fullName, contactNumber, school, course, yearLevel, gpa, financialStatus, profilePhoto, profileCompletion } = req.body;
+        const { fullName, email, gender, address, contactNumber, school, course, yearLevel, financialStatus, profilePhoto, profileCompletion } = req.body;
+        let gpa;
+        if (req.body.gpa !== undefined && req.body.gpa !== null) {
+            const parsedGpa = Number(req.body.gpa);
+            gpa = Number.isFinite(parsedGpa) ? parsedGpa : undefined;
+        }
         if (!userId) {
             res.status(400).json({
                 success: false,
@@ -80,13 +108,29 @@ const updateUser = async (req, res) => {
             return;
         }
         const connection = await database_1.default.getConnection();
-        // Update basic user information in user table
-        await connection.query(`UPDATE user SET
-        Name = ?, FullName = ?
-      WHERE id = ?`, [fullName, fullName, userId]);
+        if (email !== undefined) {
+            const [existingEmailRows] = await connection.query('SELECT id FROM user WHERE Email = ? AND id <> ?', [email, userId]);
+            if (existingEmailRows.length > 0) {
+                connection.release();
+                res.status(409).json({
+                    success: false,
+                    message: 'Email is already in use'
+                });
+                return;
+            }
+        }
+        const updateFields = [];
+        const updateValues = [];
+        if (email !== undefined) {
+            updateFields.push('Email = ?');
+            updateValues.push(email);
+        }
+        if (updateFields.length > 0) {
+            await connection.query(`UPDATE user SET ${updateFields.join(', ')} WHERE id = ?`, [...updateValues, userId]);
+        }
         // Update or create student profile with all profile information
-        await createOrUpdateStudentProfile(connection, parseInt(userId), school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion);
-        const [updatedUsers] = await connection.query('SELECT u.id, u.FullName, u.Email, u.Name, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?', [userId]);
+        await createOrUpdateStudentProfile(connection, parseInt(userId), fullName, gender, address, school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion);
+        const [updatedUsers] = await connection.query('SELECT u.id, u.Email, u.Name, sp.gender, sp.address, sp.fullName, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?', [userId]);
         connection.release();
         const updatedUser = updatedUsers[0];
         res.json({
@@ -124,7 +168,10 @@ const uploadProfilePhoto = async (req, res) => {
         const profilePhotoPath = `/uploads/${req.file.filename}`;
         const connection = await database_1.default.getConnection();
         // Update or create student profile with the profile photo
-        await createOrUpdateStudentProfile(connection, parseInt(userId), undefined, // school
+        await createOrUpdateStudentProfile(connection, parseInt(userId), undefined, // fullName
+        undefined, // gender
+        undefined, // address
+        undefined, // school
         undefined, // course
         undefined, // yearLevel
         undefined, // gpa
@@ -225,14 +272,17 @@ const register = async (req, res) => {
         const hashedPassword = await bcryptjs_1.default.hash(password, 10);
         console.log('Password hashed successfully');
         // Insert user
-        await connection.query('INSERT INTO user (Name, Email, Password, FullName, ProfileCompletion) VALUES (?, ?, ?, ?, ?)', [fullName, email, hashedPassword, fullName, 20]);
-        console.log('User inserted into database:', email);
+        const [result] = await connection.query('INSERT INTO user (Name, Email, Password) VALUES (?, ?, ?)', [fullName, email, hashedPassword]);
+        const insertId = result.insertId;
+        console.log('User inserted into database:', email, 'id:', insertId);
+        // Create initial student profile record with fullName
+        await connection.query('INSERT INTO student_profile (userId, fullName, profileCompletion) VALUES (?, ?, ?)', [insertId, fullName, 20]);
         connection.release();
         // Generate token
-        const token = jsonwebtoken_1.default.sign({ id: 0, email: email }, JWT_SECRET, { expiresIn: '7d' });
+        const token = jsonwebtoken_1.default.sign({ id: insertId, email: email, role: 'student' }, JWT_SECRET, { expiresIn: '7d' });
         // Fetch the created user to return complete data
         const newConnection = await database_1.default.getConnection();
-        const [registeredUsers] = await newConnection.query('SELECT id, FullName, Email, Name, ProfileCompletion FROM user WHERE Email = ?', [email]);
+        const [registeredUsers] = await newConnection.query('SELECT u.id, u.Email, u.Name, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?', [email]);
         newConnection.release();
         const registeredUser = registeredUsers[0];
         res.status(201).json({
@@ -266,8 +316,8 @@ const login = async (req, res) => {
         }
         const connection = await database_1.default.getConnection();
         console.log('Database connection established');
-        // Find user
-        const [users] = await connection.query('SELECT * FROM user WHERE Email = ?', [email]);
+        // Find user with profile data
+        const [users] = await connection.query('SELECT u.id, u.Email, u.Name, u.Password, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?', [email]);
         connection.release();
         const user = users[0];
         if (!user) {
@@ -290,9 +340,9 @@ const login = async (req, res) => {
             return;
         }
         console.log('Password matched');
-        // Generate token
+        // Generate token with role
         console.log('Generating JWT token...');
-        const token = jsonwebtoken_1.default.sign({ id: user.id, email: user.Email }, JWT_SECRET, { expiresIn: '7d' });
+        const token = jsonwebtoken_1.default.sign({ id: user.id, email: user.Email, role: user.role || 'student' }, JWT_SECRET, { expiresIn: '7d' });
         const { Password: _, ...userWithoutPassword } = user;
         console.log('Login successful for user:', email);
         res.json({
@@ -362,6 +412,10 @@ const googleLogin = async (req, res) => {
             const hashedPassword = await bcryptjs_1.default.hash(tempPassword, 10);
             await connection.query('INSERT INTO user (Name, Email, Password) VALUES (?, ?, ?)', [name || email, email, hashedPassword]);
             console.log('New user created via Google:', email);
+            // Create initial student profile record with fullName
+            const [userCheck] = await connection.query('SELECT id FROM user WHERE Email = ?', [email]);
+            const userId = userCheck[0].id;
+            await connection.query('INSERT INTO student_profile (userId, fullName, profileCompletion) VALUES (?, ?, ?)', [userId, name || email, 20]);
             // Fetch the created user
             const [newUsers] = await connection.query('SELECT * FROM user WHERE Email = ?', [email]);
             user = newUsers[0];
@@ -370,16 +424,20 @@ const googleLogin = async (req, res) => {
             console.log('Existing user found:', email);
         }
         connection.release();
-        // Generate JWT token
+        // Fetch user with profile data
+        const newConnection = await database_1.default.getConnection();
+        const [usersWithProfile] = await newConnection.query('SELECT u.id, u.Email, u.Name, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?', [email]);
+        newConnection.release();
+        const userWithProfile = usersWithProfile[0];
+        // Generate JWT token with role
         console.log('Generating JWT token...');
-        const jwtToken = jsonwebtoken_1.default.sign({ id: user.id, email: user.Email }, JWT_SECRET, { expiresIn: '7d' });
-        const { Password: _, ...userWithoutPassword } = user;
+        const jwtToken = jsonwebtoken_1.default.sign({ id: userWithProfile.id, email: userWithProfile.Email, role: userWithProfile.role || 'student' }, JWT_SECRET, { expiresIn: '7d' });
         console.log('Google login successful for user:', email);
         res.json({
             success: true,
             message: 'Google login successful',
             token: jwtToken,
-            user: userWithoutPassword
+            user: userWithProfile
         });
     }
     catch (error) {
@@ -391,4 +449,123 @@ const googleLogin = async (req, res) => {
     }
 };
 exports.googleLogin = googleLogin;
+const changeEmail = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { newEmail, password } = req.body;
+        if (!userId || !newEmail || !password) {
+            res.status(400).json({
+                success: false,
+                message: 'User ID, new email, and current password are required'
+            });
+            return;
+        }
+        const connection = await database_1.default.getConnection();
+        // Get current user
+        const [users] = await connection.query('SELECT * FROM user WHERE id = ?', [userId]);
+        const user = users[0];
+        if (!user) {
+            connection.release();
+            res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+            return;
+        }
+        // Verify current password
+        const isPasswordValid = await bcryptjs_1.default.compare(password, user.Password);
+        if (!isPasswordValid) {
+            connection.release();
+            res.status(401).json({
+                success: false,
+                message: 'Current password is incorrect'
+            });
+            return;
+        }
+        // Check if new email is already in use
+        const [existingEmail] = await connection.query('SELECT id FROM user WHERE Email = ? AND id <> ?', [newEmail, userId]);
+        if (existingEmail.length > 0) {
+            connection.release();
+            res.status(409).json({
+                success: false,
+                message: 'Email is already in use'
+            });
+            return;
+        }
+        // Update email
+        await connection.query('UPDATE user SET Email = ? WHERE id = ?', [newEmail, userId]);
+        connection.release();
+        res.json({
+            success: true,
+            message: 'Email updated successfully'
+        });
+    }
+    catch (error) {
+        console.error('Error changing email:', error);
+        res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to change email'
+        });
+    }
+};
+exports.changeEmail = changeEmail;
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+        if (!userId || !currentPassword || !newPassword || !confirmPassword) {
+            res.status(400).json({
+                success: false,
+                message: 'All fields are required'
+            });
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            res.status(400).json({
+                success: false,
+                message: 'New passwords do not match'
+            });
+            return;
+        }
+        const connection = await database_1.default.getConnection();
+        // Get current user
+        const [users] = await connection.query('SELECT * FROM user WHERE id = ?', [userId]);
+        const user = users[0];
+        if (!user) {
+            connection.release();
+            res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+            return;
+        }
+        // Verify current password
+        const isPasswordValid = await bcryptjs_1.default.compare(currentPassword, user.Password);
+        if (!isPasswordValid) {
+            connection.release();
+            res.status(401).json({
+                success: false,
+                message: 'Current password is incorrect'
+            });
+            return;
+        }
+        // Hash new password
+        const hashedPassword = await bcryptjs_1.default.hash(newPassword, 10);
+        // Update password
+        await connection.query('UPDATE user SET Password = ? WHERE id = ?', [hashedPassword, userId]);
+        connection.release();
+        res.json({
+            success: true,
+            message: 'Password updated successfully'
+        });
+    }
+    catch (error) {
+        console.error('Error changing password:', error);
+        res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to change password'
+        });
+    }
+};
+exports.changePassword = changePassword;
 //# sourceMappingURL=authController.js.map

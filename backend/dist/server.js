@@ -8,6 +8,9 @@ const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 const auth_1 = __importDefault(require("./routes/auth"));
+const scholarships_1 = __importDefault(require("./routes/scholarships"));
+const favorites_1 = __importDefault(require("./routes/favorites"));
+const admin_1 = __importDefault(require("./routes/admin"));
 const database_1 = __importDefault(require("./config/database"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -21,6 +24,9 @@ app.use(express_1.default.json());
 app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '../uploads')));
 // Routes
 app.use('/api/auth', auth_1.default);
+app.use('/api/scholarships', scholarships_1.default);
+app.use('/api/favorites', favorites_1.default);
+app.use('/api/admin', admin_1.default);
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'Server is running' });
