@@ -8,7 +8,6 @@ import { NotFoundPage } from './pages/not-found';
 import { DesignSystemPage } from './pages/design-system';
 import { NotificationsPage } from './pages/notifications';
 import { ScholarshipDetailPage } from './pages/scholarship-detail';
-import { FavoritesPage } from './pages/favorites';
 import { AdminDashboardPage } from './pages/admin/admin-dashboard';
 import { AdminAccountSettingsPage } from './pages/admin/admin-account-settings';
 import { CreateScholarshipPage } from './pages/admin/admin-scholarship-form';
@@ -33,10 +32,6 @@ export const router = createBrowserRouter([
     {
         path: '/scholarship/:id',
         Component: ScholarshipDetailPage,
-    },
-    {
-        path: '/favorites',
-        Component: FavoritesPage,
     },
     {
         path: '/profile',

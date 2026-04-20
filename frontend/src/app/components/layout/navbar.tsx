@@ -97,14 +97,6 @@ export function Navbar() {
                   >
                     My Applications
                   </Link>
-                  <Link
-                    to="/favorites"
-                    className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
-                      location.pathname === '/favorites' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
-                    }`}
-                  >
-                    Favorites
-                  </Link>
                 </>
               )}
             </div>
@@ -207,12 +199,6 @@ export function Navbar() {
                 <FileText className={`h-5 w-5 ${location.pathname === '/applications' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
                 <span className={`text-xs ${location.pathname === '/applications' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
                   Applications
-                </span>
-              </Link>
-              <Link to="/favorites" className="flex flex-col items-center gap-1">
-                <Heart className={`h-5 w-5 ${location.pathname === '/favorites' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
-                <span className={`text-xs ${location.pathname === '/favorites' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
-                  Favorites
                 </span>
               </Link>
               <Link to="/profile" className="flex flex-col items-center gap-1 relative">
