@@ -19,10 +19,10 @@ const FilterSection = memo(({
   defaultCourses,
   selectedTypes,
   selectedCourses,
-  gpaRange,
+  gwaRange,
   newCourse,
   showAddCourse,
-  onGpaChange,
+  onGwaChange,
   onTypeChange,
   onCourseChange,
   onAddCourse,
@@ -34,10 +34,10 @@ const FilterSection = memo(({
   defaultCourses: string[];
   selectedTypes: string[];
   selectedCourses: string[];
-  gpaRange: [number, number];
+  gwaRange: [number, number];
   newCourse: string;
   showAddCourse: boolean;
-  onGpaChange: (value: number) => void;
+  onGwaChange: (value: number) => void;
   onTypeChange: (type: string, checked: boolean) => void;
   onCourseChange: (course: string, checked: boolean) => void;
   onAddCourse: () => void;
@@ -47,19 +47,19 @@ const FilterSection = memo(({
 }) => (
   <div className="space-y-6">
     <div>
-      <h3 className="font-semibold text-[#1A2E5A] mb-3">GPA Requirement</h3>
+      <h3 className="font-semibold text-[#1A2E5A] mb-3">GWA Requirement</h3>
       <div className="space-y-3">
         <Slider
-          value={[gpaRange[1]]}
-          onValueChange={(value) => onGpaChange(value[0])}
-          min={2.0}
-          max={4.0}
+          value={[gwaRange[1]]}
+          onValueChange={(value) => onGwaChange(value[0])}
+          min={1.0}
+          max={5.0}
           step={0.1}
           className="w-full"
         />
         <div className="flex items-center justify-between text-sm text-[#64748B]">
-          <span>Min: 2.0</span>
-          <span>Max: {gpaRange[1].toFixed(1)}</span>
+          <span>Min: 5.0</span>
+          <span>Max: {gwaRange[1].toFixed(1)}</span>
         </div>
       </div>
     </div>
@@ -147,7 +147,7 @@ export function SearchPage() {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('relevance');
-  const [gpaRange, setGpaRange] = useState<[number, number]>([2.0, 4.0]);
+  const [gwaRange, setGwaRange] = useState<[number, number]>([1.0, 5.0]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [savedScholarships, setSavedScholarships] = useState<string[]>([]);
@@ -251,19 +251,19 @@ export function SearchPage() {
   };
 
   const getEligibilityStatus = (scholarship: any) => {
-    if (!user || !user.GPA || !user.Course) return 'partial';
+    if (!user || !user.GWA || !user.Course) return 'partial';
     
-    const gpaRequirement = scholarshipMapper.getGpaRequirement(scholarship);
+    const gwaRequirement = scholarshipMapper.getGwaRequirement(scholarship);
     const eligReqs = scholarshipMapper.getEligibilityRequirements(scholarship);
     
-    const meetsGPA = user.GPA >= gpaRequirement;
+    const meetsGWA = user.GWA <= gwaRequirement;
     const courses = eligReqs.courses || [];
     const meetsCourse = courses.includes('All Programs') || courses.includes(user.Course || '');
     const yearLevels = eligReqs.yearLevel || [];
     const meetsYearLevel = yearLevels.includes(user.YearLevel || '');
     
-    if (meetsGPA && meetsCourse && meetsYearLevel) return 'eligible';
-    if (!meetsGPA) return 'not-eligible';
+    if (meetsGWA && meetsCourse && meetsYearLevel) return 'eligible';
+    if (!meetsGWA) return 'not-eligible';
     return 'partial';
   };
 
@@ -272,21 +272,21 @@ export function SearchPage() {
     const provider = scholarshipMapper.getProvider(scholarship);
     const description = scholarshipMapper.getDescription(scholarship);
     const type = scholarshipMapper.getType(scholarship);
-    const gpaRequirement = scholarshipMapper.getGpaRequirement(scholarship);
+    const gwaRequirement = scholarshipMapper.getGwaRequirement(scholarship);
     const eligReqs = scholarshipMapper.getEligibilityRequirements(scholarship);
 
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesGPA = gpaRequirement >= gpaRange[0] && gpaRequirement <= gpaRange[1];
+    const matchesGWA = gwaRequirement >= gwaRange[0] && gwaRequirement <= gwaRange[1];
     const matchesType = selectedTypes.length === 0 || selectedTypes.includes(type);
     const courses = eligReqs.courses || [];
     const matchesCourse = selectedCourses.length === 0 || 
                          selectedCourses.includes('All Programs') ||
                          courses.some((c: string) => selectedCourses.includes(c));
     
-    return matchesSearch && matchesGPA && matchesType && matchesCourse;
+    return matchesSearch && matchesGWA && matchesType && matchesCourse;
   });
 
   const toggleSaveScholarship = async (scholarshipId: string) => {
@@ -329,15 +329,15 @@ export function SearchPage() {
 
   const handleClearAllFilters = () => {
     setSearchQuery('');
-    setGpaRange([2.0, 4.0]);
+    setGwaRange([1.0, 5.0]);
     setSelectedTypes([]);
     setSelectedCourses([]);
     toast.success('All filters cleared');
   };
 
   // Memoized handlers for FilterSection
-  const handleGpaChange = useCallback((value: number) => {
-    setGpaRange([2.0, value]);
+  const handleGwaChange = useCallback((value: number) => {
+    setGwaRange([1.0, value]);
   }, []);
 
   const handleTypeChange = useCallback((type: string, checked: boolean) => {
@@ -414,7 +414,7 @@ export function SearchPage() {
             </p>
             
             {/* Active Filters */}
-            {(selectedTypes.length > 0 || selectedCourses.length > 0 || gpaRange[1] < 4.0) && (
+            {(selectedTypes.length > 0 || selectedCourses.length > 0 || gwaRange[1] < 5.0) && (
               <div className="flex items-center gap-2 flex-wrap">
                 {selectedTypes.map((type) => (
                   <Badge key={type} variant="secondary" className="gap-1">
@@ -425,12 +425,12 @@ export function SearchPage() {
                     />
                   </Badge>
                 ))}
-                {gpaRange[1] < 4.0 && (
+                {gwaRange[1] < 4.0 && (
                   <Badge variant="secondary" className="gap-1">
-                    GPA {gpaRange[1].toFixed(1)} max
+                    GPA {gwaRange[1].toFixed(1)} max
                     <X
                       className="h-3 w-3 cursor-pointer"
-                      onClick={() => setGpaRange([2.0, 4.0])}
+                      onClick={() => setGwaRange([1.0, 4.0])}
                     />
                   </Badge>
                 )}
@@ -453,10 +453,10 @@ export function SearchPage() {
                   defaultCourses={defaultCourses}
                   selectedTypes={selectedTypes}
                   selectedCourses={selectedCourses}
-                  gpaRange={gpaRange}
+                  gwaRange={gwaRange}
                   newCourse={newCourse}
                   showAddCourse={showAddCourse}
-                  onGpaChange={handleGpaChange}
+                  onGwaChange={handleGwaChange}
                   onTypeChange={handleTypeChange}
                   onCourseChange={handleCourseChange}
                   onAddCourse={handleAddCourse}
@@ -515,7 +515,7 @@ export function SearchPage() {
                     provider,
                     description,
                     type,
-                    gpaRequirement,
+                    gwaRequirement,
                     slots,
                     amount,
                     deadline,
@@ -561,7 +561,7 @@ export function SearchPage() {
                         <p className="text-sm text-[#64748B] line-clamp-2">{description}</p>
 
                         <div className="flex items-center gap-2 text-xs text-[#64748B]">
-                          <Badge variant="outline">GPA {gpaRequirement}+</Badge>
+                          <Badge variant="outline">GWA {gwaRequirement}+</Badge>
                           <span>•</span>
                           <span>{slots} slots</span>
                         </div>

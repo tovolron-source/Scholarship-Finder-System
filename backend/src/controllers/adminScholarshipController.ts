@@ -12,7 +12,7 @@ export async function createScholarship(req: Request, res: Response) {
       Benefits,
       Amount,
       Slots,
-      GPARequirement,
+      GWARequirement,
       Deadline,
       ApplicationMethod,
       GoogleFormLink,
@@ -32,7 +32,7 @@ export async function createScholarship(req: Request, res: Response) {
     const connection = await pool.getConnection();
 
     const [result] = await connection.query(
-      `INSERT INTO scholarship (ScholarshipName, Provider, Type, Description, Benefits, Amount, Slots, GPARequirement, Deadline, ApplicationMethod, GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess)
+      `INSERT INTO scholarship (ScholarshipName, Provider, Type, Description, Benefits, Amount, Slots, GWARequirement, Deadline, ApplicationMethod, GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         ScholarshipName,
@@ -42,7 +42,7 @@ export async function createScholarship(req: Request, res: Response) {
         typeof Benefits === 'string' ? Benefits : JSON.stringify(Benefits || []),
         Amount || null,
         Slots || 0,
-        GPARequirement || null,
+        GWARequirement || null,
         Deadline || null,
         ApplicationMethod || null,
         GoogleFormLink || null,
@@ -86,7 +86,7 @@ export async function updateScholarship(req: Request, res: Response) {
       Benefits,
       Amount,
       Slots,
-      GPARequirement,
+      GWARequirement,
       Deadline,
       ApplicationMethod,
       GoogleFormLink,
@@ -145,9 +145,9 @@ export async function updateScholarship(req: Request, res: Response) {
       updateFields.push('Slots = ?');
       updateValues.push(Slots);
     }
-    if (GPARequirement !== undefined) {
-      updateFields.push('GPARequirement = ?');
-      updateValues.push(GPARequirement);
+    if (GWARequirement !== undefined) {
+      updateFields.push('GWARequirement = ?');
+      updateValues.push(GWARequirement);
     }
     if (Deadline !== undefined) {
       updateFields.push('Deadline = ?');

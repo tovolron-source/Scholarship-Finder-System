@@ -60,7 +60,7 @@ async function getScholarshipById(req, res) {
 // Search scholarships with filters
 async function searchScholarships(req, res) {
     try {
-        const { search, types, minGPA, maxGPA, courses } = req.query;
+        const { search, types, minGWA, maxGWA, courses } = req.query;
         const connection = await database_1.default.getConnection();
         let query = 'SELECT * FROM scholarship WHERE 1=1';
         const params = [];
@@ -74,13 +74,13 @@ async function searchScholarships(req, res) {
             query += ` AND Type IN (${typeArray.map(() => '?').join(',')})`;
             params.push(...typeArray);
         }
-        if (minGPA) {
-            query += ` AND GPARequirement >= ?`;
-            params.push(parseFloat(minGPA));
+        if (minGWA) {
+            query += ` AND GWARequirement >= ?`;
+            params.push(parseFloat(minGWA));
         }
-        if (maxGPA) {
-            query += ` AND GPARequirement <= ?`;
-            params.push(parseFloat(maxGPA));
+        if (maxGWA) {
+            query += ` AND GWARequirement <= ?`;
+            params.push(parseFloat(maxGWA));
         }
         const [scholarships] = await connection.query(query, params);
         connection.release();
@@ -101,12 +101,29 @@ async function searchScholarships(req, res) {
 // Create scholarship (Admin only)
 async function createScholarship(req, res) {
     try {
-        const { ScholarshipName, Provider, Type, Description, Benefits, Amount, Slots, GPARequirement, Deadline, ApplicationMethod, GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess } = req.body;
+        const { ScholarshipName, Provider, Type, Description, Benefits, Amount, Slots, GWARequirement, Deadline, ApplicationMethod, GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess } = req.body;
+        // Validate GWA (1.0-5.0 range)
+        if (EligibilityRequirements?.gwa) {
+            const gwaValue = parseFloat(EligibilityRequirements.gwa);
+            if (isNaN(gwaValue) || gwaValue < 1.0 || gwaValue > 5.0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'GWA must be between 1.0 (best) and 5.0 (worst)'
+                });
+            }
+        }
+        // Validate Slots
+        if (Slots && (isNaN(Number(Slots)) || Number(Slots) <= 0)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Available Slots must be greater than 0'
+            });
+        }
         const connection = await database_1.default.getConnection();
         const query = `
       INSERT INTO scholarship (
         ScholarshipName, Provider, Type, Description, Benefits,
-        Amount, Slots, GPARequirement, Deadline, ApplicationMethod,
+        Amount, Slots, GWARequirement, Deadline, ApplicationMethod,
         GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
@@ -118,7 +135,7 @@ async function createScholarship(req, res) {
             JSON.stringify(Benefits),
             Amount,
             Slots,
-            GPARequirement,
+            GWARequirement,
             Deadline,
             ApplicationMethod,
             GoogleFormLink,
@@ -147,6 +164,23 @@ async function updateScholarship(req, res) {
     try {
         const { id } = req.params;
         const updateData = req.body;
+        // Validate GWA (1.0-5.0 range)
+        if (updateData.EligibilityRequirements?.gwa) {
+            const gwaValue = parseFloat(updateData.EligibilityRequirements.gwa);
+            if (isNaN(gwaValue) || gwaValue < 1.0 || gwaValue > 5.0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'GWA must be between 1.0 (best) and 5.0 (worst)'
+                });
+            }
+        }
+        // Validate Slots
+        if (updateData.Slots && (isNaN(Number(updateData.Slots)) || Number(updateData.Slots) <= 0)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Available Slots must be greater than 0'
+            });
+        }
         const connection = await database_1.default.getConnection();
         const updates = [];
         const values = [];

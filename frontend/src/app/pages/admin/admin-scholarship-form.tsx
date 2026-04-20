@@ -135,10 +135,18 @@ export function CreateScholarshipPage() {
       return;
     }
 
-    // Validation for GWA
-    if (eligibility.gwa && (isNaN(Number(eligibility.gwa)) || Number(eligibility.gwa) <= 0)) {
-      toast.error('Minimum GWA must be greater than 0');
-      return;
+    // Validation for GWA (1.0 is best, 5.0 is worst)
+    if (eligibility.gwa) {
+      const gwaValue = parseFloat(eligibility.gwa);
+      if (isNaN(gwaValue) || gwaValue < 1.0 || gwaValue > 5.0) {
+        toast.error('GWA must be between 1.0 (best) and 5.0 (worst)');
+        return;
+      }
+      // Check for exactly 1 decimal place
+      if (!/^\d+\.\d$/.test(eligibility.gwa.trim())) {
+        toast.error('GWA must have exactly 1 decimal place (e.g., 3.5)');
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -458,14 +466,16 @@ export function CreateScholarshipPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="gwa">Minimum GWA (Grade Weighted Average)</Label>
+                    <Label htmlFor="gwa">Minimum GWA</Label>
                     <Input
                       id="gwa"
                       type="number"
-                      step="0.01"
+                      step="0.1"
+                      min="1.0"
+                      max="5.0"
                       value={eligibility.gwa}
                       onChange={(e) => setEligibility({ ...eligibility, gwa: e.target.value })}
-                      placeholder="e.g., 3.0"
+                      placeholder="1.0 - 5.0"
                       className="mt-2"
                     />
                   </div>

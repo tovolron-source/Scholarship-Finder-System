@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Footer } from '../components/layout/footer';
+import { scholarshipMapper } from '../lib/scholarshipMapper';
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -53,13 +54,13 @@ export function LandingPage() {
     const userYearLevel = userProfile.YearLevel || userProfile.yearLevel || '';
     
     return scholarships.filter(scholarship => {
-      // Get GPA requirement
-      const scholarshipGPA = scholarship.GPARequirement || scholarship.gpaRequirement || 0;
+      // Get GWA requirement
+      const scholarshipGWA = scholarshipMapper.getGwaRequirement(scholarship) || 0;
       
-      // Check GPA eligibility - user's GPA must be >= scholarship requirement
-      const meetsGPA = userGPA >= scholarshipGPA;
+      // Check GWA eligibility - user's GWA must be <= scholarship requirement (1.0 best, 5.0 worst)
+      const meetsGWA = userGPA <= scholarshipGWA;
       
-      if (!meetsGPA) {
+      if (!meetsGWA) {
         return false;
       }
       
@@ -218,7 +219,7 @@ export function LandingPage() {
                   <div className="flex items-start justify-between">
                     <Badge className="bg-[#1A2E5A] text-white">{scholarship.type || scholarship.Type}</Badge>
                     <Badge variant="outline" className="text-[#64748B]">
-                      GPA {scholarship.gpaRequirement || scholarship.GPARequirement}+
+                      GWA {scholarshipMapper.getGwaRequirement(scholarship)}+
                     </Badge>
                   </div>
                   <div>

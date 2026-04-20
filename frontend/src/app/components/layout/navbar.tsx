@@ -97,6 +97,14 @@ export function Navbar() {
                   >
                     My Applications
                   </Link>
+                  <Link
+                    to="/favorites"
+                    className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
+                      location.pathname === '/favorites' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
+                    }`}
+                  >
+                    Favorites
+                  </Link>
                 </>
               )}
             </div>

@@ -68,7 +68,7 @@ async function initializeTables() {
         Benefits JSON,
         Amount VARCHAR(100),
         Slots INT DEFAULT 0,
-        GPARequirement DECIMAL(3,2) DEFAULT 0.0,
+        GWARequirement DECIMAL(3,2) DEFAULT 0.0,
         Deadline DATE,
         ApplicationMethod VARCHAR(255),
         GoogleFormLink VARCHAR(500),

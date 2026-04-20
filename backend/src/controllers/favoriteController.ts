@@ -30,7 +30,7 @@ export async function getFavoritesByStudent(req: Request, res: Response) {
       `SELECT f.FavoriteID, f.StudentID, f.ScholarshipID, 
               s.ScholarshipID, s.ScholarshipName, s.Provider, s.Type, 
               s.Description, s.Benefits, s.Amount, s.Slots, 
-              s.GPARequirement, s.Deadline, s.ApplicationMethod,
+              s.GWARequirement, s.Deadline, s.ApplicationMethod,
               s.GoogleFormLink, s.ProviderContact, s.EligibilityRequirements, 
               s.ApplicationProcess
        FROM favorite f

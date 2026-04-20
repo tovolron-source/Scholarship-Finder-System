@@ -7,6 +7,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
 import { toast } from 'sonner';
+import { scholarshipMapper } from '../lib/scholarshipMapper';
 
 export function FavoritesPage() {
   const navigate = useNavigate();
@@ -116,7 +117,7 @@ export function FavoritesPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex gap-2 flex-wrap">
                       <Badge className="bg-[#1A2E5A] text-white">{scholarship.type || scholarship.Type}</Badge>
-                      <Badge variant="outline">GPA {scholarship.gpaRequirement || scholarship.GPARequirement}+</Badge>
+                      <Badge variant="outline">GWA {scholarshipMapper.getGwaRequirement(scholarship)}+</Badge>
                     </div>
                     <Button
                       variant="ghost"

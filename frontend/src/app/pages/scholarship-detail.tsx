@@ -155,14 +155,15 @@ export function ScholarshipDetailPage() {
     return eligReq;
   };
 
-  const eligReq = parseEligibility(scholarship.eligibilityRequirements || scholarship.EligibilityRequirements);
+  const eligReq = parseEligibility(scholarship?.eligibilityRequirements || scholarship?.EligibilityRequirements);
   
-  const meetsGWA = (user?.gpa || user?.GPA || 0) >= (eligReq.gwa ? parseFloat(eligReq.gwa) : 0);
-  const meetsCourse = !eligReq.courses || eligReq.courses === '' || 
+  // GWA: 1.0 is best, 5.0 is worst. User's GWA must be <= (better or equal to) requirement
+  const meetsGWA = scholarship ? ((user?.gpa || user?.GPA || 5.0) <= (eligReq?.gwa ? parseFloat(eligReq.gwa) : 5.0)) : false;
+  const meetsCourse = !scholarship ? false : (!eligReq?.courses || eligReq.courses === '' || 
                       eligReq.courses.includes('All Programs') || 
-                      eligReq.courses.includes(user?.course || user?.Course || '');
-  const meetsYearLevel = !eligReq.yearLevel || eligReq.yearLevel === '' ||
-                        eligReq.yearLevel === (user?.yearLevel || user?.YearLevel || '');
+                      eligReq.courses.includes(user?.course || user?.Course || ''));
+  const meetsYearLevel = !scholarship ? false : (!eligReq?.yearLevel || eligReq.yearLevel === '' ||
+                        eligReq.yearLevel === (user?.yearLevel || user?.YearLevel || ''));
   
   const criteriaChecks = [
     { label: 'GWA', meets: meetsGWA, value: meetsGWA },
@@ -277,7 +278,7 @@ export function ScholarshipDetailPage() {
                     <CheckCircle2 className="h-5 w-5 text-[#1A2E5A] shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium text-[#1A2E5A]">GWA Requirement</p>
-                      <p className="text-sm text-[#64748B]">{eligReq.gwa || 'Not specified'} or higher</p>
+                      <p className="text-sm text-[#64748B]">Must maintain a GWA: {eligReq?.gwa || 'Not specified'}</p>
                     </div>
                   </div>
 
@@ -286,7 +287,7 @@ export function ScholarshipDetailPage() {
                     <div>
                       <p className="font-medium text-[#1A2E5A]">Eligible Programs</p>
                       <p className="text-sm text-[#64748B]">
-                        {((scholarship.eligibilityRequirements?.courses || scholarship.EligibilityRequirements?.courses) || (typeof scholarship.EligibilityRequirements === 'string' ? JSON.parse(scholarship.EligibilityRequirements).courses : [])).join(', ')}
+                        {eligReq?.courses ? (typeof eligReq.courses === 'string' ? eligReq.courses : eligReq.courses.join(', ')) : 'Not specified'}
                       </p>
                     </div>
                   </div>
@@ -296,22 +297,10 @@ export function ScholarshipDetailPage() {
                     <div>
                       <p className="font-medium text-[#1A2E5A]">Year Level</p>
                       <p className="text-sm text-[#64748B]">
-                        {((scholarship.eligibilityRequirements?.yearLevel || scholarship.EligibilityRequirements?.yearLevel) || (typeof scholarship.EligibilityRequirements === 'string' ? JSON.parse(scholarship.EligibilityRequirements).yearLevel : [])).join(', ')}
+                        {eligReq?.yearLevel ? (typeof eligReq.yearLevel === 'string' ? eligReq.yearLevel : eligReq.yearLevel.join(', ')) : 'Not specified'}
                       </p>
                     </div>
                   </div>
-
-                  {(scholarship.eligibilityRequirements?.financialStatus || scholarship.EligibilityRequirements?.financialStatus || (typeof scholarship.EligibilityRequirements === 'string' ? JSON.parse(scholarship.EligibilityRequirements).financialStatus : null)) && (
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-[#1A2E5A] shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-[#1A2E5A]">Financial Status</p>
-                        <p className="text-sm text-[#64748B]">
-                          {((scholarship.eligibilityRequirements?.financialStatus || scholarship.EligibilityRequirements?.financialStatus) || (typeof scholarship.EligibilityRequirements === 'string' ? JSON.parse(scholarship.EligibilityRequirements).financialStatus : [])).join(', ')}
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -439,9 +428,9 @@ export function ScholarshipDetailPage() {
                       <div className="flex-1">
                         <p className="text-sm text-[#1A2E5A]">GWA</p>
                         <p className="text-xs text-[#64748B]">
-                          {meetsGPA 
-                            ? `Your GPA (${user?.gpa || user?.GPA}) meets requirement (${scholarship.gpaRequirement || scholarship.GPARequirement}+)` 
-                            : `Your GPA (${user?.gpa || user?.GPA}) doesn't meet requirement (${scholarship.gpaRequirement || scholarship.GPARequirement}+)`}
+                          {meetsGWA 
+                            ? `Your GWA (${user?.gpa || user?.GPA}) meets requirement (${eligReq?.gwa || 'Not specified'})` 
+                            : `Your GWA (${user?.gpa || user?.GPA}) doesn't meet requirement (${eligReq?.gwa || 'Not specified'})`}
                         </p>
                       </div>
                     </div>
@@ -476,25 +465,7 @@ export function ScholarshipDetailPage() {
                       </div>
                     </div>
 
-                    {(() => {
-                      const eligReqs = scholarship.eligibilityRequirements || 
-                                      (scholarship.EligibilityRequirements ? JSON.parse(scholarship.EligibilityRequirements) : {});
-                      return eligReqs?.financialStatus ? (
-                      <div className="flex items-start gap-2">
-                        {meetsFinancial ? (
-                            <CheckCircle2 className="h-5 w-5 text-[#2ECC71] shrink-0" />
-                          ) : (
-                            <XCircle className="h-5 w-5 text-[#E74C3C] shrink-0" />
-                        )}
-                        <div className="flex-1">
-                          <p className="text-sm text-[#1A2E5A]">Financial Status</p>
-                          <p className="text-xs text-[#64748B]">
-                            {meetsFinancial ? 'Matches requirement' : 'Does not match requirement'}
-                          </p>
-                        </div>
-                      </div>
-                      ) : null;
-                    })()}
+
                   </div>
                 </div>
 

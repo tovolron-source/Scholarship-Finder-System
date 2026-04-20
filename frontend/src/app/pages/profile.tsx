@@ -584,15 +584,16 @@ export function ProfilePage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="gpa">GPA</Label>
+                        <Label htmlFor="gwa">GWA (Grade Weighted Average)</Label>
                         <Input
-                          id="gpa"
+                          id="gwa"
                           type="number"
-                          min="0"
-                          max="4"
-                          step="0.01"
+                          min="1.0"
+                          max="5.0"
+                          step="0.1"
                           value={userData.gpa || ''}
                           onChange={(e) => setUserData({ ...userData, gpa: parseFloat(e.target.value) || 0 })}
+                          placeholder="1.0 - 5.0"
                           className="mt-2"
                         />
                       </div>

@@ -10,7 +10,7 @@ const database_1 = __importDefault(require("../config/database"));
 // Admin: Create new scholarship
 async function createScholarship(req, res) {
     try {
-        const { ScholarshipName, Provider, Type, Description, Benefits, Amount, Slots, GPARequirement, Deadline, ApplicationMethod, GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess } = req.body;
+        const { ScholarshipName, Provider, Type, Description, Benefits, Amount, Slots, GWARequirement, Deadline, ApplicationMethod, GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess } = req.body;
         // Validate required fields
         if (!ScholarshipName || !Provider || !Type) {
             return res.status(400).json({
@@ -19,7 +19,7 @@ async function createScholarship(req, res) {
             });
         }
         const connection = await database_1.default.getConnection();
-        const [result] = await connection.query(`INSERT INTO scholarship (ScholarshipName, Provider, Type, Description, Benefits, Amount, Slots, GPARequirement, Deadline, ApplicationMethod, GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess)
+        const [result] = await connection.query(`INSERT INTO scholarship (ScholarshipName, Provider, Type, Description, Benefits, Amount, Slots, GWARequirement, Deadline, ApplicationMethod, GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
             ScholarshipName,
             Provider,
@@ -28,7 +28,7 @@ async function createScholarship(req, res) {
             typeof Benefits === 'string' ? Benefits : JSON.stringify(Benefits || []),
             Amount || null,
             Slots || 0,
-            GPARequirement || null,
+            GWARequirement || null,
             Deadline || null,
             ApplicationMethod || null,
             GoogleFormLink || null,
@@ -61,7 +61,7 @@ async function createScholarship(req, res) {
 async function updateScholarship(req, res) {
     try {
         const { id } = req.params;
-        const { ScholarshipName, Provider, Type, Description, Benefits, Amount, Slots, GPARequirement, Deadline, ApplicationMethod, GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess } = req.body;
+        const { ScholarshipName, Provider, Type, Description, Benefits, Amount, Slots, GWARequirement, Deadline, ApplicationMethod, GoogleFormLink, ProviderContact, EligibilityRequirements, ApplicationProcess } = req.body;
         const connection = await database_1.default.getConnection();
         // Check if scholarship exists
         const [existing] = await connection.query('SELECT * FROM scholarship WHERE ScholarshipID = ?', [id]);
@@ -104,9 +104,9 @@ async function updateScholarship(req, res) {
             updateFields.push('Slots = ?');
             updateValues.push(Slots);
         }
-        if (GPARequirement !== undefined) {
-            updateFields.push('GPARequirement = ?');
-            updateValues.push(GPARequirement);
+        if (GWARequirement !== undefined) {
+            updateFields.push('GWARequirement = ?');
+            updateValues.push(GWARequirement);
         }
         if (Deadline !== undefined) {
             updateFields.push('Deadline = ?');
