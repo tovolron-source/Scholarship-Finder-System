@@ -189,7 +189,7 @@ export function AdminAccountSettingsPage() {
         {/* Account Info Card */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Admin Account Information</CardTitle>
+            <CardTitle className="text-[#1A2E5A]">Admin Account Information</CardTitle>
             <CardDescription>Your current account details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

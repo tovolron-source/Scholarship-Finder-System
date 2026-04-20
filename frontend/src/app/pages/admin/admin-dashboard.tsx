@@ -383,7 +383,7 @@ export function AdminDashboardPage() {
             <div className="flex flex-col gap-4">
               {/* Search and Add */}
               <div className="flex flex-col md:flex-row gap-4 items-end">
-                <div className="flex-1">
+                <div className="flex-1 w-full md:w-auto">
                   <label className="block text-sm font-medium text-[#1A2E5A] mb-2">
                     Search Scholarships
                   </label>
@@ -393,13 +393,13 @@ export function AdminDashboardPage() {
                       placeholder="Search by name or provider..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 w-full"
                     />
                   </div>
                 </div>
                 <Button 
                   onClick={() => navigate('/admin/create-scholarship')}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 w-full md:w-auto"
                 >
                   <Plus className="w-4 h-4" />
                   Add Scholarship

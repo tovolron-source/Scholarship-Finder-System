@@ -129,6 +129,18 @@ export function CreateScholarshipPage() {
       return;
     }
 
+    // Validation for Slots
+    if (formData.Slots && (isNaN(Number(formData.Slots)) || Number(formData.Slots) <= 0)) {
+      toast.error('Available Slots must be greater than 0');
+      return;
+    }
+
+    // Validation for GWA
+    if (eligibility.gwa && (isNaN(Number(eligibility.gwa)) || Number(eligibility.gwa) <= 0)) {
+      toast.error('Minimum GWA must be greater than 0');
+      return;
+    }
+
     setIsSaving(true);
 
     try {

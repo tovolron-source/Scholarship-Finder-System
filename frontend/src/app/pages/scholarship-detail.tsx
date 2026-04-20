@@ -142,22 +142,35 @@ export function ScholarshipDetailPage() {
     }
   };
 
-  // Calculate eligibility match
-  const meetsGPA = (user?.gpa || user?.GPA || 0) >= (scholarship.gpaRequirement || scholarship.GPARequirement);
-  const meetsCourse = (scholarship.eligibilityRequirements?.courses || scholarship.EligibilityRequirements?.courses || []).includes('All Programs') || 
-                      (scholarship.eligibilityRequirements?.courses || scholarship.EligibilityRequirements?.courses || []).includes(user?.course || user?.Course || '');
-  const meetsYearLevel = (scholarship.eligibilityRequirements?.yearLevel || scholarship.EligibilityRequirements?.yearLevel || []).includes(user?.yearLevel || user?.YearLevel || '');
-  const meetsFinancial = !(scholarship.eligibilityRequirements?.financialStatus || scholarship.EligibilityRequirements?.financialStatus) || 
-                        (scholarship.eligibilityRequirements?.financialStatus || scholarship.EligibilityRequirements?.financialStatus || []).includes(user?.financialStatus || user?.FinancialStatus || '');
+  // Calculate eligibility match - Fixed matching system
+  const parseEligibility = (eligReq: any): any => {
+    if (!eligReq) return {};
+    if (typeof eligReq === 'string') {
+      try {
+        return JSON.parse(eligReq);
+      } catch {
+        return {};
+      }
+    }
+    return eligReq;
+  };
+
+  const eligReq = parseEligibility(scholarship.eligibilityRequirements || scholarship.EligibilityRequirements);
+  
+  const meetsGWA = (user?.gpa || user?.GPA || 0) >= (eligReq.gwa ? parseFloat(eligReq.gwa) : 0);
+  const meetsCourse = !eligReq.courses || eligReq.courses === '' || 
+                      eligReq.courses.includes('All Programs') || 
+                      eligReq.courses.includes(user?.course || user?.Course || '');
+  const meetsYearLevel = !eligReq.yearLevel || eligReq.yearLevel === '' ||
+                        eligReq.yearLevel === (user?.yearLevel || user?.YearLevel || '');
   
   const criteriaChecks = [
-    { label: 'GPA', meets: meetsGPA, value: meetsGPA },
+    { label: 'GWA', meets: meetsGWA, value: meetsGWA },
     { label: 'Course', meets: meetsCourse, value: meetsCourse },
     { label: 'Year Level', meets: meetsYearLevel, value: meetsYearLevel },
-    { label: 'Financial Status', meets: meetsFinancial, value: meetsFinancial },
   ];
 
-  const matchScore = (criteriaChecks.filter(c => c.meets).length / criteriaChecks.length) * 100;
+  const matchScore = criteriaChecks.length > 0 ? (criteriaChecks.filter(c => c.meets).length / criteriaChecks.length) * 100 : 0;
   const profileComplete = (user?.profileCompletion || 0) === 100;
 
   return (
@@ -200,7 +213,7 @@ export function ScholarshipDetailPage() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Badge className="bg-[#1A2E5A] text-white">{scholarship.type || scholarship.Type}</Badge>
-                <Badge variant="outline">GPA {scholarship.gpaRequirement || scholarship.GPARequirement}+</Badge>
+                <Badge variant="outline">GWA {eligReq.gwa || 'Not specified'}+</Badge>
                 <Badge className="bg-[#F5A623] text-white">
                   <Calendar className="mr-1 h-3 w-3" />
                   Due: {new Date(scholarship.deadline || scholarship.Deadline).toLocaleDateString()}
@@ -263,8 +276,8 @@ export function ScholarshipDetailPage() {
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-[#1A2E5A] shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium text-[#1A2E5A]">GPA Requirement</p>
-                      <p className="text-sm text-[#64748B]">{scholarship.gpaRequirement || scholarship.GPARequirement} or higher</p>
+                      <p className="font-medium text-[#1A2E5A]">GWA Requirement</p>
+                      <p className="text-sm text-[#64748B]">{eligReq.gwa || 'Not specified'} or higher</p>
                     </div>
                   </div>
 
@@ -418,13 +431,13 @@ export function ScholarshipDetailPage() {
                   
                   <div className="space-y-2">
                     <div className="flex items-start gap-2">
-                      {meetsGPA ? (
+                      {meetsGWA ? (
                         <CheckCircle2 className="h-5 w-5 text-[#2ECC71] shrink-0" />
                       ) : (
                         <XCircle className="h-5 w-5 text-[#E74C3C] shrink-0" />
                       )}
                       <div className="flex-1">
-                        <p className="text-sm text-[#1A2E5A]">GPA</p>
+                        <p className="text-sm text-[#1A2E5A]">GWA</p>
                         <p className="text-xs text-[#64748B]">
                           {meetsGPA 
                             ? `Your GPA (${user?.gpa || user?.GPA}) meets requirement (${scholarship.gpaRequirement || scholarship.GPARequirement}+)` 
