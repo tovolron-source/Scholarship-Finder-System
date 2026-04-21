@@ -209,6 +209,12 @@ export function Navbar() {
                   Applications
                 </span>
               </Link>
+              <Link to="/favorites" className="flex flex-col items-center gap-1">
+                <Heart className={`h-5 w-5 ${location.pathname === '/favorites' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
+                <span className={`text-xs ${location.pathname === '/favorites' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
+                  Favorites
+                </span>
+              </Link>
               <Link to="/profile" className="flex flex-col items-center gap-1 relative">
                 <User className={`h-5 w-5 ${location.pathname === '/profile' ? 'text-[#1A2E5A]' : 'text-[#64748B]'}`} />
                 <span className={`text-xs ${location.pathname === '/profile' ? 'text-[#1A2E5A] font-medium' : 'text-[#64748B]'}`}>
