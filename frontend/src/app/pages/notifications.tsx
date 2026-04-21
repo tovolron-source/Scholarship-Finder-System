@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, CheckCheck, Sparkles, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -7,8 +7,133 @@ import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
 import { toast } from 'sonner';
 
+interface Notification {
+  id: string;
+  type: 'new' | 'deadline' | 'status' | 'application';
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  scholarshipName?: string;
+  status?: string;
+}
+
 export function NotificationsPage() {
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const user = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+
+      if (!user || !token) {
+        setLoading(false);
+        return;
+      }
+
+      const userData = JSON.parse(user);
+
+      // Fetch applications
+      const appResponse = await fetch(`http://localhost:5000/api/applications/student/${userData.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      // Fetch scholarships to check deadlines
+      const schResponse = await fetch('http://localhost:5000/api/scholarships');
+
+      if (appResponse.ok && schResponse.ok) {
+        const appData = await appResponse.json();
+        const schData = await schResponse.json();
+
+        const generatedNotifications: Notification[] = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Generate notifications from applications
+        if (appData.data) {
+          appData.data.forEach((app: any) => {
+            const deadlineDate = new Date(app.Deadline);
+            const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+            // Deadline approaching notification
+            if (daysUntilDeadline > 0 && daysUntilDeadline <= 7) {
+              generatedNotifications.push({
+                id: `deadline-${app.ScholarshipID}`,
+                type: 'deadline',
+                title: 'Deadline Approaching',
+                message: `${app.ScholarshipName} deadline is ${daysUntilDeadline} day${daysUntilDeadline !== 1 ? 's' : ''} away`,
+                timestamp: new Date().toISOString(),
+                read: false,
+                scholarshipName: app.ScholarshipName
+              });
+            }
+
+            // Application status notifications
+            if (app.Status !== 'Pending') {
+              const statusType = app.Status === 'Approved' ? 'Approved' : app.Status === 'Rejected' ? 'Rejected' : 'Under Review';
+              generatedNotifications.push({
+                id: `status-${app.ApplicationID}`,
+                type: 'status',
+                title: `Application ${statusType}`,
+                message: `Your application for ${app.ScholarshipName} has been ${app.Status.toLowerCase()}`,
+                timestamp: app.LastUpdated || app.DateApplied,
+                read: false,
+                scholarshipName: app.ScholarshipName,
+                status: app.Status
+              });
+            }
+
+            // Recent application notification
+            const appliedDate = new Date(app.DateApplied);
+            const daysAgo = Math.floor((today.getTime() - appliedDate.getTime()) / (1000 * 60 * 60 * 24));
+            if (daysAgo === 0) {
+              generatedNotifications.push({
+                id: `applied-${app.ScholarshipID}`,
+                type: 'application',
+                title: 'Application Submitted',
+                message: `You have successfully applied for ${app.ScholarshipName}`,
+                timestamp: app.DateApplied,
+                read: false,
+                scholarshipName: app.ScholarshipName
+              });
+            }
+          });
+        }
+
+        // Generate notifications for new scholarships matching student profile
+        if (schData.data) {
+          const newScholarships = schData.data.slice(0, 3); // Show top 3 new scholarships
+          newScholarships.forEach((sch: any) => {
+            generatedNotifications.push({
+              id: `new-${sch.ScholarshipID}`,
+              type: 'new',
+              title: 'New Scholarship Available',
+              message: `Check out ${sch.ScholarshipName} from ${sch.Provider}`,
+              timestamp: new Date().toISOString(),
+              read: false,
+              scholarshipName: sch.ScholarshipName
+            });
+          });
+        }
+
+        setNotifications(generatedNotifications.reverse());
+      } else {
+        toast.error('Failed to load notifications');
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      toast.error('Failed to load notifications');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -17,6 +142,7 @@ export function NotificationsPage() {
       case 'deadline':
         return <Clock className="h-5 w-5 text-[#E67E22]" />;
       case 'status':
+      case 'application':
         return <AlertCircle className="h-5 w-5 text-[#2ECC71]" />;
       default:
         return <Bell className="h-5 w-5 text-[#64748B]" />;
@@ -45,6 +171,21 @@ export function NotificationsPage() {
       return `${Math.floor(diffInMinutes / 1440)}d ago`;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8F9FC]">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-6 py-8 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1A2E5A]"></div>
+            <p className="mt-4 text-[#64748B]">Loading notifications...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -94,92 +235,56 @@ export function NotificationsPage() {
             <div className="space-y-2">
               {notifications.map((notification) => (
                 <Card 
-                  key={notification.id} 
-                  onClick={() => dismissNotification(notification.id)}
+                  key={notification.id}
                   className={`transition-all cursor-pointer hover:shadow-md ${
-                    notification.read 
-                      ? 'bg-white' 
-                      : 'bg-blue-50 border-l-4 border-l-[#1A2E5A]'
+                    notification.read ? 'bg-white' : 'bg-blue-50'
                   }`}
                 >
-                  <CardContent className="p-5">
+                  <CardContent className="p-4">
                     <div className="flex items-start gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                        notification.type === 'new' ? 'bg-[#F5A623]/10' :
-                        notification.type === 'deadline' ? 'bg-[#E67E22]/10' :
-                        'bg-[#2ECC71]/10'
-                      }`}>
+                      <div className="flex-shrink-0 mt-1">
                         {getNotificationIcon(notification.type)}
                       </div>
-
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="font-semibold text-[#1A2E5A]">
-                            {notification.title}
-                          </h4>
-                          {!notification.read && (
-                            <Badge className="bg-[#1A2E5A] text-white text-xs">New</Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-[#64748B] mb-2">
-                          {notification.message}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-[#64748B]">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h3 className="font-semibold text-[#1A2E5A] text-sm">
+                              {notification.title}
+                            </h3>
+                            <p className="text-sm text-[#64748B] mt-1">
+                              {notification.message}
+                            </p>
+                          </div>
+                          <div className="flex-shrink-0 text-xs text-[#64748B] whitespace-nowrap ml-2">
                             {getTimeAgo(notification.timestamp)}
-                          </span>
-                          <span className="text-xs text-[#64748B] italic">
-                            Click to dismiss
-                          </span>
+                          </div>
                         </div>
+                        {notification.status && (
+                          <div className="mt-2">
+                            <Badge className={
+                              notification.status === 'Approved' ? 'bg-[#2ECC71] text-white' :
+                              notification.status === 'Rejected' ? 'bg-[#E74C3C] text-white' :
+                              'bg-blue-500 text-white'
+                            }>
+                              {notification.status}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => dismissNotification(notification.id)}
+                        className="text-[#64748B] hover:text-[#1A2E5A]"
+                      >
+                        ×
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )}
-
-          {/* Notification Settings */}
-          <Card className="mt-8">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-[#1A2E5A] mb-4">Notification Settings</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-[#1A2E5A]">Email Notifications</p>
-                    <p className="text-sm text-[#64748B]">Receive notifications via email</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#1A2E5A]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1A2E5A]"></div>
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-[#1A2E5A]">Deadline Reminders</p>
-                    <p className="text-sm text-[#64748B]">Get reminded about upcoming deadlines</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#1A2E5A]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1A2E5A]"></div>
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-[#1A2E5A]">New Scholarship Matches</p>
-                    <p className="text-sm text-[#64748B]">Notify when new scholarships match your profile</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#1A2E5A]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1A2E5A]"></div>
-                  </label>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </main>
 
@@ -187,3 +292,4 @@ export function NotificationsPage() {
     </div>
   );
 }
+
