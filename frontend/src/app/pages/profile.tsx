@@ -35,7 +35,7 @@ export function ProfilePage() {
     school: '',
     course: '',
     yearLevel: '',
-    gpa: 0,
+    gwa: 0,
     financialStatus: 'Middle Income',
     profileCompletion: 20
   });
@@ -89,7 +89,7 @@ export function ProfilePage() {
               school: data.user.school ?? user.school ?? user.School ?? '',
               course: data.user.course ?? user.course ?? user.Course ?? '',
               yearLevel: data.user.yearLevel ?? user.yearLevel ?? user.YearLevel ?? '',
-              gpa: data.user.gpa ?? user.gpa ?? user.GPA ?? 0,
+              gwa: data.user.gwa ?? user.gwa ?? user.GWA ?? 0,
               financialStatus: (data.user.financialStatus ?? user.financialStatus ?? user.FinancialStatus ?? 'Middle Income') as any,
               profileCompletion: data.user.profileCompletion ?? user.profileCompletion ?? user.ProfileCompletion ?? 20
             });
@@ -214,7 +214,7 @@ export function ProfilePage() {
           school: userData.school,
           course: userData.course,
           yearLevel: userData.yearLevel,
-          gpa: Number.isFinite(userData.gpa) ? userData.gpa : undefined,
+          gwa: Number.isFinite(userData.gwa) ? userData.gwa : undefined,
           financialStatus: userData.financialStatus,
           profilePhoto: profilePhotoPath,
           profileCompletion: Math.min(userData.profileCompletion + 10, 100)
@@ -244,8 +244,8 @@ export function ProfilePage() {
             Course: data.user.course || userData.course,
             yearLevel: data.user.yearLevel || userData.yearLevel,
             YearLevel: data.user.yearLevel || userData.yearLevel,
-            gpa: data.user.gpa !== undefined ? data.user.gpa : userData.gpa,
-            GPA: data.user.gpa !== undefined ? data.user.gpa : userData.gpa,
+            gwa: data.user.gwa !== undefined ? data.user.gwa : userData.gwa,
+            GWA: data.user.gwa !== undefined ? data.user.gwa : userData.gwa,
             financialStatus: data.user.financialStatus || userData.financialStatus,
             FinancialStatus: data.user.financialStatus || userData.financialStatus,
             profilePhoto: remoteProfilePhoto,
@@ -591,8 +591,8 @@ export function ProfilePage() {
                           min="1.0"
                           max="5.0"
                           step="0.1"
-                          value={userData.gpa || ''}
-                          onChange={(e) => setUserData({ ...userData, gpa: parseFloat(e.target.value) || 0 })}
+                          value={userData.gwa || ''}
+                          onChange={(e) => setUserData({ ...userData, gwa: parseFloat(e.target.value) || 0 })}
                           placeholder="1.0 - 5.0"
                           className="mt-2"
                         />

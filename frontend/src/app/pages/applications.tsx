@@ -11,6 +11,43 @@ import { toast } from 'sonner';
 
 export function ApplicationsPage() {
   const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchApplications();
+  }, []);
+
+  const fetchApplications = async () => {
+    try {
+      const user = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+
+      if (!user || !token) {
+        setLoading(false);
+        return;
+      }
+
+      const userData = JSON.parse(user);
+
+      const response = await fetch(`http://localhost:5000/api/applications/student/${userData.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setApplications(data.data || []);
+      } else {
+        toast.error('Failed to load applications');
+      }
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      toast.error('Failed to load applications');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -23,6 +60,24 @@ export function ApplicationsPage() {
   };
 
   const handleWithdraw = (id: string) => {
+    setApplications(applications.filter(app => app.ApplicationID !== id));
+    toast.success('Application withdrawn');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8F9FC]">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-6 py-8 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1A2E5A]"></div>
+            <p className="mt-4 text-[#64748B]">Loading your applications...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
     setApplications(applications.filter(app => app.id !== id));
     toast.success('Application withdrawn');
   };
@@ -73,16 +128,16 @@ export function ApplicationsPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {applications.map((app) => (
-                      <tr key={app.id} className="hover:bg-[#F8F9FC] transition-colors">
+                      <tr key={app.ApplicationID} className="hover:bg-[#F8F9FC] transition-colors">
                         <td className="px-6 py-4">
-                          <p className="font-medium text-[#1A2E5A]">{app.scholarshipName}</p>
+                          <p className="font-medium text-[#1A2E5A]">{app.ScholarshipName}</p>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-sm text-[#64748B]">{app.provider}</p>
+                          <p className="text-sm text-[#64748B]">{app.Provider}</p>
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-sm text-[#64748B]">
-                            {new Date(app.dateApplied).toLocaleDateString('en-US', {
+                            {new Date(app.DateApplied).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                               year: 'numeric'
@@ -90,8 +145,8 @@ export function ApplicationsPage() {
                           </p>
                         </td>
                         <td className="px-6 py-4">
-                          <Badge className={getStatusBadge(app.status)}>
-                            {app.status}
+                          <Badge className={getStatusBadge(app.Status)}>
+                            {app.Status}
                           </Badge>
                         </td>
                         <td className="px-6 py-4">
@@ -105,24 +160,24 @@ export function ApplicationsPage() {
                               </DialogTrigger>
                               <DialogContent className="max-w-2xl">
                                 <DialogHeader>
-                                  <DialogTitle>{app.scholarshipName}</DialogTitle>
+                                  <DialogTitle>{app.ScholarshipName}</DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-4 py-4">
                                   <div className="grid grid-cols-2 gap-4">
                                     <div>
                                       <p className="text-sm text-[#64748B] mb-1">Provider</p>
-                                      <p className="font-medium text-[#1A2E5A]">{app.provider}</p>
+                                      <p className="font-medium text-[#1A2E5A]">{app.Provider}</p>
                                     </div>
                                     <div>
                                       <p className="text-sm text-[#64748B] mb-1">Date Applied</p>
                                       <p className="font-medium text-[#1A2E5A]">
-                                        {new Date(app.dateApplied).toLocaleDateString()}
+                                        {new Date(app.DateApplied).toLocaleDateString()}
                                       </p>
                                     </div>
                                     <div>
                                       <p className="text-sm text-[#64748B] mb-1">Status</p>
-                                      <Badge className={getStatusBadge(app.status)}>
-                                        {app.status}
+                                      <Badge className={getStatusBadge(app.Status)}>
+                                        {app.Status}
                                       </Badge>
                                     </div>
                                   </div>
@@ -153,11 +208,11 @@ export function ApplicationsPage() {
                               </DialogContent>
                             </Dialog>
                             
-                            {app.status === 'Pending' && (
+                            {app.Status === 'Pending' && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleWithdraw(app.id)}
+                                onClick={() => handleWithdraw(app.ApplicationID.toString())}
                                 className="text-[#E74C3C] hover:text-[#E74C3C] hover:bg-red-50"
                               >
                                 <X className="mr-2 h-4 w-4" />
@@ -176,22 +231,22 @@ export function ApplicationsPage() {
             {/* Mobile Card View */}
             <div className="md:hidden space-y-4">
               {applications.map((app) => (
-                <Card key={app.id}>
+                <Card key={app.ApplicationID}>
                   <CardContent className="p-5 space-y-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-[#1A2E5A] mb-1">{app.scholarshipName}</h3>
-                        <p className="text-sm text-[#64748B]">{app.provider}</p>
+                        <h3 className="font-semibold text-[#1A2E5A] mb-1">{app.ScholarshipName}</h3>
+                        <p className="text-sm text-[#64748B]">{app.Provider}</p>
                       </div>
-                      <Badge className={getStatusBadge(app.status)}>
-                        {app.status}
+                      <Badge className={getStatusBadge(app.Status)}>
+                        {app.Status}
                       </Badge>
                     </div>
 
                     <div className="flex items-center gap-4 text-sm text-[#64748B]">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        <span>{new Date(app.dateApplied).toLocaleDateString()}</span>
+                        <span>{new Date(app.DateApplied).toLocaleDateString()}</span>
                       </div>
                     </div>
 
@@ -205,24 +260,24 @@ export function ApplicationsPage() {
                         </DialogTrigger>
                         <DialogContent className="max-w-[95vw]">
                           <DialogHeader>
-                            <DialogTitle className="text-lg">{app.scholarshipName}</DialogTitle>
+                            <DialogTitle className="text-lg">{app.ScholarshipName}</DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
                             <div className="space-y-3">
                               <div>
                                 <p className="text-sm text-[#64748B] mb-1">Provider</p>
-                                <p className="font-medium text-[#1A2E5A]">{app.provider}</p>
+                                <p className="font-medium text-[#1A2E5A]">{app.Provider}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-[#64748B] mb-1">Date Applied</p>
                                 <p className="font-medium text-[#1A2E5A]">
-                                  {new Date(app.dateApplied).toLocaleDateString()}
+                                  {new Date(app.DateApplied).toLocaleDateString()}
                                 </p>
                               </div>
                               <div>
                                 <p className="text-sm text-[#64748B] mb-1">Status</p>
-                                <Badge className={getStatusBadge(app.status)}>
-                                  {app.status}
+                                <Badge className={getStatusBadge(app.Status)}>
+                                  {app.Status}
                                 </Badge>
                               </div>
                             </div>

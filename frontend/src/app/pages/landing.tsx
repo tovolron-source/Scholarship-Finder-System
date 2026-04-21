@@ -107,11 +107,18 @@ export function LandingPage() {
       }
       navigate('/login');
     } else {
-      // User is logged in, go to search with query parameter
-      if (searchInput.trim()) {
-        navigate(`/search?q=${encodeURIComponent(searchInput.trim())}`);
+      // User is logged in, check if admin
+      const userData = JSON.parse(user);
+      if (userData.role === 'admin') {
+        // Admin users go to dashboard
+        navigate('/admin/dashboard');
       } else {
-        navigate('/search');
+        // Student users go to search
+        if (searchInput.trim()) {
+          navigate(`/search?q=${encodeURIComponent(searchInput.trim())}`);
+        } else {
+          navigate('/search');
+        }
       }
     }
   };
@@ -166,36 +173,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Strip - Only show when not logged in */}
-      {!isLoggedIn && (
-      <section className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-6 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="space-y-2">
-              <div className="flex items-center justify-center gap-2">
-                <Award className="h-6 w-6 text-[#F5A623]" />
-                <span className="text-3xl font-bold text-[#1A2E5A]">2,500+</span>
-              </div>
-              <p className="text-[#64748B]">Total Scholarships</p>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-center gap-2">
-                <Users className="h-6 w-6 text-[#F5A623]" />
-                <span className="text-3xl font-bold text-[#1A2E5A]">10,000+</span>
-              </div>
-              <p className="text-[#64748B]">Students Matched</p>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-center gap-2">
-                <TrendingUp className="h-6 w-6 text-[#F5A623]" />
-                <span className="text-3xl font-bold text-[#1A2E5A]">150+</span>
-              </div>
-              <p className="text-[#64748B]">Partner Providers</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      )}
+
 
       {/* Featured/Matched Scholarships */}
       <section className="py-16 bg-[#F8F9FC]">

@@ -78,13 +78,51 @@ export function ApplyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.certify) {
+      toast.error('Please certify that your information is accurate');
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsSubmitting(false);
-    setShowSuccess(true);
+    try {
+      const user = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+
+      if (!user || !token) {
+        navigate('/login');
+        return;
+      }
+
+      const userData = JSON.parse(user);
+      
+      const response = await fetch('http://localhost:5000/api/applications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          StudentID: userData.id,
+          ScholarshipID: id,
+          PersonalStatement: formData.personalStatement
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Application submitted successfully!');
+        setShowSuccess(true);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to submit application');
+      }
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      toast.error('Failed to submit application');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSaveDraft = () => {

@@ -333,8 +333,8 @@ export function ProfilePage() {
                         )}
                         {userData.gpa && Number.isFinite(userData.gpa) && userData.gpa > 0 && (
                           <div>
-                            <p className="text-xs text-[#64748B] mb-1">GPA</p>
-                            <p className="text-sm font-semibold text-[#1A2E5A]">{Number(userData.gpa).toFixed(2)} / 4.0</p>
+                            <p className="text-xs text-[#64748B] mb-1">GWA</p>
+                            <p className="text-sm font-semibold text-[#1A2E5A]">{Number(userData.gwa).toFixed(2)} / 5.0</p>
                           </div>
                         )}
                         {userData.address && (
@@ -548,31 +548,31 @@ export function ProfilePage() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="gpa">GPA</Label>
+                        <Label htmlFor="gwa">GWA (Grade Weighted Average)</Label>
                         <Input
-                          id="gpa"
+                          id="gwa"
                           type="number"
                           step="0.01"
                           min="0"
-                          max="4.0"
-                          value={userData.gpa}
-                          onChange={(e) => setUserData({ ...userData, gpa: parseFloat(e.target.value) })}
+                          max="5.0"
+                          value={userData.gwa}
+                          onChange={(e) => setUserData({ ...userData, gwa: parseFloat(e.target.value) })}
                           placeholder="3.5"
                         />
                       </div>
                     </div>
 
-                    {userData.gpa && (
+                    {userData.gwa && (
                       <div className="space-y-2 bg-[#F8F9FC] p-4 rounded-lg">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-[#64748B]">GPA Score</span>
-                          <span className="text-sm font-semibold text-[#1A2E5A]">{userData.gpa} / 4.0</span>
+                          <span className="text-sm text-[#64748B]">GWA Score</span>
+                          <span className="text-sm font-semibold text-[#1A2E5A]">{userData.gwa} / 5.0</span>
                         </div>
-                        <Progress value={(userData.gpa / 4.0) * 100} className="h-2" />
+                        <Progress value={((5.0 - userData.gwa) / 5.0) * 100} className="h-2" />
                         <p className="text-xs text-[#64748B]">
-                          {userData.gpa >= 3.5 ? 'Excellent! You qualify for most merit scholarships.' : 
-                           userData.gpa >= 3.0 ? 'Good standing. Many scholarships available.' : 
-                           'Consider improving your GPA for more opportunities.'}
+                          {userData.gwa <= 1.5 ? 'Excellent! You qualify for most merit scholarships.' : 
+                           userData.gwa <= 2.5 ? 'Good standing. Many scholarships available.' : 
+                           'Consider improving your GWA for more opportunities.'}
                         </p>
                       </div>
                     )}

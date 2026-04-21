@@ -10,7 +10,7 @@ export interface User {
   school?: string;
   course?: string;
   yearLevel?: string;
-  gpa?: number;
+  gwa?: number;
   financialStatus?: 'Low Income' | 'Middle Income' | 'High Income';
   profileCompletion: number;
 }
@@ -21,14 +21,14 @@ export interface Scholarship {
   provider: string;
   providerLogo?: string;
   type: 'Merit' | 'Need-based' | 'Athletic' | 'Government' | 'Private';
-  gpaRequirement: number;
+  gwaRequirement: number;
   amount: string;
   slots: number;
   deadline: string;
   description: string;
   benefits: string[];
   eligibilityRequirements: {
-    gpa: number;
+    gwa: number;
     courses: string[];
     yearLevel: string[];
     financialStatus?: string[];
