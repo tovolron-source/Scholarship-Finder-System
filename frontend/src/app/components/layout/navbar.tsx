@@ -64,7 +64,7 @@ export function Navbar() {
                 <>
                   <Link
                     to="/admin/dashboard"
-                    className={`text-sm font-medium transition-colors hover:text-[#1A2E5A] ${
+                    className={`text-lg font-large transition-colors hover:text-[#1A2E5A] ${
                       location.pathname === '/admin/dashboard' ? 'text-[#1A2E5A]' : 'text-[#64748B]'
                     }`}
                   >

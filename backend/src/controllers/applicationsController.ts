@@ -161,7 +161,6 @@ export async function getApplicationsByScholarship(req: Request, res: Response) 
         a.Status,
         a.DateApplied,
         sp.fullName,
-        sp.email,
         u.Email
       FROM application a 
       JOIN user u ON a.StudentID = u.id 

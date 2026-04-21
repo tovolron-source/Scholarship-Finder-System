@@ -166,7 +166,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
       school,
       course,
       yearLevel,
-      gpa,
+      gwa,
       financialStatus,
       contactNumber,
       profilePhoto,

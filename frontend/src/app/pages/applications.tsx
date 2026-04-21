@@ -78,9 +78,6 @@ export function ApplicationsPage() {
       </div>
     );
   }
-    setApplications(applications.filter(app => app.id !== id));
-    toast.success('Application withdrawn');
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FC]">

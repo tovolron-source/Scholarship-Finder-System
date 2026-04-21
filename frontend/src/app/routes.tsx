@@ -9,6 +9,8 @@ import { DesignSystemPage } from './pages/design-system';
 import { NotificationsPage } from './pages/notifications';
 import { ScholarshipDetailPage } from './pages/scholarship-detail';
 import { FavoritesPage } from './pages/favorites';
+import { ApplicationsPage } from './pages/applications';
+import { ApplyPage } from './pages/apply';
 import { AdminDashboardPage } from './pages/admin/admin-dashboard';
 import { AdminAccountSettingsPage } from './pages/admin/admin-account-settings';
 import { CreateScholarshipPage } from './pages/admin/admin-scholarship-form';
@@ -37,6 +39,14 @@ export const router = createBrowserRouter([
     {
         path: '/favorites',
         Component: FavoritesPage,
+    },
+    {
+        path: '/applications',
+        Component: ApplicationsPage,
+    },
+    {
+        path: '/apply/:id',
+        Component: ApplyPage,
     },
     {
         path: '/profile',

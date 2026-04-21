@@ -28,11 +28,22 @@ async function initializeTables() {
         FullName VARCHAR(255),
         Email VARCHAR(255) UNIQUE NOT NULL,
         Password VARCHAR(255) NOT NULL,
+        role ENUM('admin', 'student') DEFAULT 'student',
         RegistrationDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     console.log('✅ Users table ready');
+
+    // Add role column if it doesn't exist (for existing databases)
+    try {
+      await connection.query(`
+        ALTER TABLE user ADD COLUMN role ENUM('admin', 'student') DEFAULT 'student'
+      `);
+      console.log('✅ Added role column to user table');
+    } catch (e) {
+      // Column might already exist, ignore error
+    }
 
     // Create student_profile table if it doesn't exist
     await connection.query(`

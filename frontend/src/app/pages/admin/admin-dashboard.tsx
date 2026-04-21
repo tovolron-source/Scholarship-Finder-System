@@ -372,7 +372,7 @@ export function AdminDashboardPage() {
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 style={{ fontFamily: 'var(--font-heading)' }} className="text-5xl md:text-6xl font-bold text-[#1A2E5A]">Dashboard</h1>
+              <h1 style={{ fontFamily: 'var(--font-heading)' }} className="text-5xl md:text-3xl font-bold text-[#1A2E5A]">Dashboard</h1>
               <p className="text-[#64748B] mt-1">Manage scholarships</p>
             </div>
           </div>
