@@ -1,7 +1,22 @@
 import { Link } from 'react-router';
+import { useEffect, useState } from 'react';
 import { Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 
 export function Footer() {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        setIsAdmin(userData.role === 'admin');
+      } catch (e) {
+        setIsAdmin(false);
+      }
+    }
+  }, []);
+
   return (
     <footer className="bg-[#1A2E5A] text-white mt-auto">
       <div className="container mx-auto px-6 py-12">
@@ -25,26 +40,43 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/" className="text-gray-300 hover:text-[#F5A623] transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/search" className="text-gray-300 hover:text-[#F5A623] transition-colors">
-                  Search Scholarships
-                </Link>
-              </li>
-              <li>
-                <Link to="/applications" className="text-gray-300 hover:text-[#F5A623] transition-colors">
-                  My Applications
-                </Link>
-              </li>
-              <li>
-                <Link to="/favorites" className="text-gray-300 hover:text-[#F5A623] transition-colors">
-                  Saved Scholarships
-                </Link>
-              </li>
+              {isAdmin ? (
+                <>
+                  <li>
+                    <Link to="/" className="text-gray-300 hover:text-[#F5A623] transition-colors">
+                      Home
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/admin/dashboard" className="text-gray-300 hover:text-[#F5A623] transition-colors">
+                      Dashboard
+                    </Link>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    <Link to="/" className="text-gray-300 hover:text-[#F5A623] transition-colors">
+                      Home
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/search" className="text-gray-300 hover:text-[#F5A623] transition-colors">
+                      Search Scholarships
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/applications" className="text-gray-300 hover:text-[#F5A623] transition-colors">
+                      My Applications
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/favorites" className="text-gray-300 hover:text-[#F5A623] transition-colors">
+                      Saved Scholarships
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 
