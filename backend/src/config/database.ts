@@ -39,12 +39,13 @@ async function initializeTables() {
       CREATE TABLE IF NOT EXISTS student_profile (
         id INT AUTO_INCREMENT PRIMARY KEY,
         userId INT NOT NULL UNIQUE,
+        fullName VARCHAR(255),
         gender VARCHAR(50),
         address VARCHAR(500),
         school VARCHAR(255),
         course VARCHAR(255),
         yearLevel VARCHAR(50),
-        gpa DECIMAL(3,2),
+        gwa DECIMAL(3,2),
         financialStatus VARCHAR(50),
         contactNumber VARCHAR(20),
         profilePhoto VARCHAR(500),
@@ -54,6 +55,13 @@ async function initializeTables() {
         FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
       )
     `);
+
+    // Attempt to rename gpa column to gwa if it exists (for existing databases)
+    try {
+      await connection.query(`ALTER TABLE student_profile CHANGE COLUMN gpa gwa DECIMAL(3,2)`);
+    } catch (e) {
+      // Column might not exist or might already be renamed, ignore error
+    }
 
     console.log('✅ Student Profile table ready');
 
@@ -96,6 +104,27 @@ async function initializeTables() {
     `);
 
     console.log('✅ Favorite table ready');
+
+    // Create applications table if it doesn't exist
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS application (
+        ApplicationID INT AUTO_INCREMENT PRIMARY KEY,
+        StudentID INT NOT NULL,
+        ScholarshipID INT NOT NULL,
+        Status ENUM('Pending', 'Under Review', 'Approved', 'Rejected') DEFAULT 'Pending',
+        PersonalStatement LONGTEXT,
+        TranscriptPath VARCHAR(500),
+        IDDocumentPath VARCHAR(500),
+        RecommendationPath VARCHAR(500),
+        DateApplied TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        LastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_student_scholarship_app (StudentID, ScholarshipID),
+        FOREIGN KEY (StudentID) REFERENCES user(id) ON DELETE CASCADE,
+        FOREIGN KEY (ScholarshipID) REFERENCES scholarship(ScholarshipID) ON DELETE CASCADE
+      )
+    `);
+
+    console.log('✅ Application table ready');
     connection.release();
   } catch (error) {
     console.error('❌ Error initializing tables:', error);

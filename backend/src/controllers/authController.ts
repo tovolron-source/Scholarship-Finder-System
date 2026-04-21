@@ -22,7 +22,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
     const connection = await pool.getConnection();
     const [users] = await connection.query(
-      'SELECT u.id, u.Email, u.Name, u.role, sp.gender, sp.address, sp.fullName, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?',
+      'SELECT u.id, u.Email, u.Name, u.role, sp.gender, sp.address, sp.fullName, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gwa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?',
       [userId]
     );
     connection.release();
@@ -50,7 +50,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Helper function to create or update student profile
-const createOrUpdateStudentProfile = async (connection: any, userId: number, fullName?: string, gender?: string, address?: string, school?: string, course?: string, yearLevel?: string, gpa?: number, financialStatus?: string, contactNumber?: string, profilePhoto?: string, profileCompletion?: number): Promise<void> => {
+const createOrUpdateStudentProfile = async (connection: any, userId: number, fullName?: string, gender?: string, address?: string, school?: string, course?: string, yearLevel?: string, gwa?: number, financialStatus?: string, contactNumber?: string, profilePhoto?: string, profileCompletion?: number): Promise<void> => {
   try {
     // Check if student profile exists
     const [existingProfileRows] = await connection.query(
@@ -67,7 +67,7 @@ const createOrUpdateStudentProfile = async (connection: any, userId: number, ful
       const updatedSchool = school !== undefined ? school : existingProfile.school;
       const updatedCourse = course !== undefined ? course : existingProfile.course;
       const updatedYearLevel = yearLevel !== undefined ? yearLevel : existingProfile.yearLevel;
-      const updatedGpa = typeof gpa === 'number' && Number.isFinite(gpa) ? gpa : existingProfile.gpa;
+      const updatedGwa = typeof gwa === 'number' && Number.isFinite(gwa) ? gwa : existingProfile.gwa;
       const updatedFinancialStatus = financialStatus !== undefined ? financialStatus : existingProfile.financialStatus;
       const updatedContactNumber = contactNumber !== undefined ? contactNumber : existingProfile.contactNumber;
       const updatedProfilePhoto = profilePhoto !== undefined ? profilePhoto : existingProfile.profilePhoto;
@@ -75,7 +75,7 @@ const createOrUpdateStudentProfile = async (connection: any, userId: number, ful
 
       await connection.query(
         `UPDATE student_profile SET
-          fullName = ?, gender = ?, address = ?, school = ?, course = ?, yearLevel = ?, gpa = ?, financialStatus = ?, contactNumber = ?, profilePhoto = ?, profileCompletion = ?
+          fullName = ?, gender = ?, address = ?, school = ?, course = ?, yearLevel = ?, gwa = ?, financialStatus = ?, contactNumber = ?, profilePhoto = ?, profileCompletion = ?
         WHERE userId = ?`,
         [
           updatedFullName,
@@ -84,7 +84,7 @@ const createOrUpdateStudentProfile = async (connection: any, userId: number, ful
           updatedSchool,
           updatedCourse,
           updatedYearLevel,
-          updatedGpa,
+          updatedGwa,
           updatedFinancialStatus,
           updatedContactNumber,
           updatedProfilePhoto,
@@ -94,9 +94,9 @@ const createOrUpdateStudentProfile = async (connection: any, userId: number, ful
       );
     } else {
       await connection.query(
-        `INSERT INTO student_profile (userId, fullName, gender, address, school, course, yearLevel, gpa, financialStatus, contactNumber, profilePhoto, profileCompletion)
+        `INSERT INTO student_profile (userId, fullName, gender, address, school, course, yearLevel, gwa, financialStatus, contactNumber, profilePhoto, profileCompletion)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, fullName, gender, address, school, course, yearLevel, typeof gpa === 'number' && Number.isFinite(gpa) ? gpa : null, financialStatus, contactNumber, profilePhoto, profileCompletion]
+        [userId, fullName, gender, address, school, course, yearLevel, typeof gwa === 'number' && Number.isFinite(gwa) ? gwa : null, financialStatus, contactNumber, profilePhoto, profileCompletion]
       );
     }
   } catch (error) {
@@ -109,11 +109,11 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
   try {
     const userId = req.params.id;
     const { fullName, email, gender, address, contactNumber, school, course, yearLevel, financialStatus, profilePhoto, profileCompletion } = req.body;
-    let gpa: number | undefined;
+    let gwa: number | undefined;
 
-    if (req.body.gpa !== undefined && req.body.gpa !== null) {
-      const parsedGpa = Number(req.body.gpa);
-      gpa = Number.isFinite(parsedGpa) ? parsedGpa : undefined;
+    if (req.body.gwa !== undefined && req.body.gwa !== null) {
+      const parsedGwa = Number(req.body.gwa);
+      gwa = Number.isFinite(parsedGwa) ? parsedGwa : undefined;
     }
 
     if (!userId) {
@@ -229,7 +229,7 @@ export const uploadProfilePhoto = async (req: Request, res: Response): Promise<v
       undefined, // school
       undefined, // course
       undefined, // yearLevel
-      undefined, // gpa
+      undefined, // gwa
       undefined, // financialStatus
       undefined, // contactNumber
       profilePhotoPath, // profilePhoto
@@ -372,7 +372,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Fetch the created user to return complete data
     const newConnection = await pool.getConnection();
     const [registeredUsers] = await newConnection.query(
-      'SELECT u.id, u.Email, u.Name, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
+      'SELECT u.id, u.Email, u.Name, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gwa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
       [email]
     );
     newConnection.release();
@@ -415,7 +415,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Find user with profile data
     const [users] = await connection.query(
-      'SELECT u.id, u.Email, u.Name, u.Password, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
+      'SELECT u.id, u.Email, u.Name, u.Password, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gwa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
       [email]
     );
 
@@ -570,7 +570,7 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
     // Fetch user with profile data
     const newConnection = await pool.getConnection();
     const [usersWithProfile] = await newConnection.query(
-      'SELECT u.id, u.Email, u.Name, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
+      'SELECT u.id, u.Email, u.Name, u.role, sp.fullName, sp.gender, sp.address, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gwa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.Email = ?',
       [email]
     );
     newConnection.release();
