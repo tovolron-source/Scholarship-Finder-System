@@ -17,12 +17,14 @@ async function getNotifications(req, res) {
     try {
         const studentId = req.params.studentId;
         if (!studentId) {
+            console.error('❌ No student ID provided');
             res.status(400).json({
                 success: false,
                 message: 'Student ID is required'
             });
             return;
         }
+        console.log(`📬 Fetching notifications for student: ${studentId}`);
         const connection = await database_1.default.getConnection();
         const [notifications] = await connection.query(`SELECT 
         n.NotificationID,
@@ -43,13 +45,15 @@ async function getNotifications(req, res) {
       ORDER BY n.CreatedAt DESC
       LIMIT 100`, [studentId]);
         connection.release();
+        console.log(`✅ Found ${notifications.length} notifications for student ${studentId}`);
         res.json({
             success: true,
-            data: notifications
+            data: notifications,
+            count: notifications.length
         });
     }
     catch (error) {
-        console.error('Error fetching notifications:', error);
+        console.error('❌ Error fetching notifications:', error);
         res.status(500).json({
             success: false,
             message: 'Error fetching notifications',

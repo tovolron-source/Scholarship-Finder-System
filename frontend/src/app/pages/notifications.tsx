@@ -45,6 +45,7 @@ export function NotificationsPage() {
       }
 
       const userData = JSON.parse(user);
+      console.log(`📬 Fetching notifications for user: ${userData.id}`);
 
       // Fetch notifications from database
       const response = await fetch(`http://localhost:5000/api/notifications/student/${userData.id}`, {
@@ -55,6 +56,7 @@ export function NotificationsPage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(`✅ Notifications fetched:`, data.count || 0, 'notifications');
         const transformedNotifications = data.data?.map((notif: any) => ({
           id: String(notif.NotificationID),
           NotificationID: notif.NotificationID,
@@ -63,15 +65,18 @@ export function NotificationsPage() {
           message: notif.Message,
           timestamp: notif.CreatedAt,
           read: notif.IsRead,
+          IsRead: notif.IsRead,
           scholarshipName: notif.ScholarshipName,
           status: notif.ApplicationStatus
         })) || [];
         setNotifications(transformedNotifications);
       } else {
-        toast.error('Failed to load notifications');
+        const errorData = await response.json();
+        console.error('❌ Failed to load notifications:', response.status, errorData.message);
+        toast.error(`Failed to load notifications: ${errorData.message}`);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('❌ Error fetching notifications:', error);
       toast.error('Failed to load notifications');
     } finally {
       setLoading(false);

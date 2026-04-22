@@ -97,17 +97,29 @@ export function ApplyPage() {
 
       const userData = JSON.parse(user);
       
+      // Create FormData to handle file uploads
+      const applicationFormData = new FormData();
+      applicationFormData.append('StudentID', userData.id);
+      applicationFormData.append('ScholarshipID', id!);
+      applicationFormData.append('PersonalStatement', formData.personalStatement);
+      
+      // Add file uploads if they exist
+      if (formData.transcript) {
+        applicationFormData.append('transcript', formData.transcript);
+      }
+      if (formData.idDocument) {
+        applicationFormData.append('idDocument', formData.idDocument);
+      }
+      if (formData.recommendation) {
+        applicationFormData.append('recommendation', formData.recommendation);
+      }
+      
       const response = await fetch('http://localhost:5000/api/applications', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          StudentID: userData.id,
-          ScholarshipID: id,
-          PersonalStatement: formData.personalStatement
-        })
+        body: applicationFormData
       });
 
       if (response.ok) {

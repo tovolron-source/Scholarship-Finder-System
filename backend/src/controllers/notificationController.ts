@@ -7,6 +7,7 @@ export async function getNotifications(req: Request, res: Response) {
     const studentId = req.params.studentId;
 
     if (!studentId) {
+      console.error('❌ No student ID provided');
       res.status(400).json({
         success: false,
         message: 'Student ID is required'
@@ -14,6 +15,7 @@ export async function getNotifications(req: Request, res: Response) {
       return;
     }
 
+    console.log(`📬 Fetching notifications for student: ${studentId}`);
     const connection = await pool.getConnection();
     const [notifications] = await connection.query(
       `SELECT 
@@ -38,12 +40,15 @@ export async function getNotifications(req: Request, res: Response) {
     );
     connection.release();
 
+    console.log(`✅ Found ${(notifications as any[]).length} notifications for student ${studentId}`);
+
     res.json({
       success: true,
-      data: notifications
+      data: notifications,
+      count: (notifications as any[]).length
     });
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    console.error('❌ Error fetching notifications:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching notifications',

@@ -193,6 +193,8 @@ export function SearchPage() {
         const response = await fetch('http://localhost:5000/api/scholarships');
         if (response.ok) {
           const data = await response.json();
+          console.log('📚 All scholarships from API:', data.data?.length, 'scholarships');
+          console.log('🔍 Scholarship names:', data.data?.map((s: any) => scholarshipMapper.getName(s)));
           setScholarships(data.data || []);
           setError(null);
         } else {
@@ -285,6 +287,17 @@ export function SearchPage() {
     const matchesCourse = selectedCourses.length === 0 || 
                          selectedCourses.includes('All Programs') ||
                          courses.some((c: string) => selectedCourses.includes(c));
+    
+    // Debug logging - show why scholarships are filtered
+    if (scholarships.length > 0 && scholarships.length <= 5) {
+      console.log(`📖 Scholarship: "${name}"`, {
+        matchesSearch,
+        matchesGWA: `${gwaRequirement} in range [${gwaRange[0]}-${gwaRange[1]}]`,
+        matchesType: `${type} - selected: ${selectedTypes.length === 0 ? 'all' : selectedTypes}`,
+        matchesCourse: `eligible: ${courses} - selected: ${selectedCourses.length === 0 ? 'all' : selectedCourses}`,
+        willInclude: matchesSearch && matchesGWA && matchesType && matchesCourse
+      });
+    }
     
     return matchesSearch && matchesGWA && matchesType && matchesCourse;
   });

@@ -150,7 +150,7 @@ export function AdminDashboardPage() {
     setApprovingId(applicationId);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/applications/${applicationId}/approve`, {
+      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/approve`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -176,7 +176,7 @@ export function AdminDashboardPage() {
     setApprovingId(applicationId);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/applications/${applicationId}/reject`, {
+      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/reject`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

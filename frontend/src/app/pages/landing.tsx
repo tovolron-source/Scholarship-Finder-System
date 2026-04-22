@@ -12,6 +12,7 @@ export function LandingPage() {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [featuredScholarships, setFeaturedScholarships] = useState<any[]>([]);
 
   useEffect(() => {
@@ -19,6 +20,12 @@ export function LandingPage() {
     const storedUser = localStorage.getItem('user');
     const isLogged = !!(token && storedUser);
     setIsLoggedIn(isLogged);
+
+    // Check if user is admin
+    if (isLogged && storedUser) {
+      const userData = JSON.parse(storedUser);
+      setIsAdmin(userData.role === 'admin');
+    }
 
     // Fetch all scholarships from API
     const fetchScholarships = async () => {
@@ -28,8 +35,31 @@ export function LandingPage() {
           const data = await response.json();
           const allScholarships = data.data || [];
           
-          // Get first 3 scholarships as featured scholarships
-          setFeaturedScholarships(allScholarships.slice(0, 3));
+          // If user is logged in and is a student, show matched scholarships
+          if (isLogged && storedUser) {
+            const userData = JSON.parse(storedUser);
+            if (userData.role !== 'admin') {
+              // Filter scholarships based on user's GWA and course
+              const matchedScholarships = allScholarships.filter((scholarship: any) => {
+                const gwaRequirement = scholarship.GWARequirement || scholarship.gwaRequirement || 5.0;
+                const eligibleCourses = scholarship.EligibleCourses ? scholarship.EligibleCourses.split(',').map((c: string) => c.trim()) : ['All Programs'];
+                
+                const meetsGWA = !userData.GWA || userData.GWA <= gwaRequirement;
+                const meetsCourse = !userData.Course || eligibleCourses.includes('All Programs') || eligibleCourses.includes(userData.Course);
+                
+                return meetsGWA && meetsCourse;
+              }).slice(0, 3);
+              
+              // If no matched scholarships, show featured (first 3)
+              setFeaturedScholarships(matchedScholarships.length > 0 ? matchedScholarships : allScholarships.slice(0, 3));
+            } else {
+              // Admin users see featured scholarships
+              setFeaturedScholarships(allScholarships.slice(0, 3));
+            }
+          } else {
+            // Non-logged in users see featured scholarships
+            setFeaturedScholarships(allScholarships.slice(0, 3));
+          }
         }
       } catch (error) {
         console.error('Error fetching scholarships:', error);
@@ -38,7 +68,7 @@ export function LandingPage() {
     };
 
     fetchScholarships();
-  }, []);
+  }, [isLoggedIn]);
 
   const handleSearch = () => {
     // Check if user is logged in by checking localStorage for token
@@ -125,10 +155,10 @@ export function LandingPage() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
             <h2 style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl md:text-4xl text-[#1A2E5A] mb-4">
-              Featured Scholarships
+              {isLoggedIn && !isAdmin ? 'Matched Scholarships' : 'Featured Scholarships'}
             </h2>
             <p className="text-[#64748B] max-w-2xl mx-auto">
-              Discover top scholarship opportunities handpicked for students like you
+              {isLoggedIn && !isAdmin ? 'Scholarships tailored to your academic profile and eligibility' : 'Discover top scholarship opportunities handpicked for students like you'}
             </p>
           </div>
 

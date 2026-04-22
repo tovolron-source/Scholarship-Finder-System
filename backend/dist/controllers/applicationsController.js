@@ -87,6 +87,7 @@ async function checkApplicationExists(req, res) {
 async function createApplication(req, res) {
     try {
         const { StudentID, ScholarshipID, PersonalStatement } = req.body;
+        const files = req.files;
         if (!StudentID || !ScholarshipID) {
             res.status(400).json({
                 success: false,
@@ -105,9 +106,18 @@ async function createApplication(req, res) {
             });
             return;
         }
-        // Create application
-        const [result] = await connection.query(`INSERT INTO application (StudentID, ScholarshipID, PersonalStatement, Status) 
-       VALUES (?, ?, ?, 'Pending')`, [StudentID, ScholarshipID, PersonalStatement || null]);
+        // Extract file paths from uploaded files
+        const transcriptPath = files?.transcript?.[0]?.path || null;
+        const idDocumentPath = files?.idDocument?.[0]?.path || null;
+        const recommendationPath = files?.recommendation?.[0]?.path || null;
+        console.log('📝 Creating application with files:', {
+            transcriptPath,
+            idDocumentPath,
+            recommendationPath
+        });
+        // Create application with file paths
+        const [result] = await connection.query(`INSERT INTO application (StudentID, ScholarshipID, PersonalStatement, TranscriptPath, IDDocumentPath, RecommendationPath, Status) 
+       VALUES (?, ?, ?, ?, ?, ?, 'Pending')`, [StudentID, ScholarshipID, PersonalStatement || null, transcriptPath, idDocumentPath, recommendationPath]);
         connection.release();
         res.status(201).json({
             success: true,
@@ -116,7 +126,7 @@ async function createApplication(req, res) {
         });
     }
     catch (error) {
-        console.error('Error creating application:', error);
+        console.error('❌ Error creating application:', error);
         res.status(500).json({
             success: false,
             message: 'Error submitting application',
