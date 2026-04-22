@@ -12,6 +12,7 @@ const scholarships_1 = __importDefault(require("./routes/scholarships"));
 const favorites_1 = __importDefault(require("./routes/favorites"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const applications_1 = __importDefault(require("./routes/applications"));
+const notifications_1 = __importDefault(require("./routes/notifications"));
 const database_1 = __importDefault(require("./config/database"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -28,6 +29,7 @@ app.use('/api/auth', auth_1.default);
 app.use('/api/scholarships', scholarships_1.default);
 app.use('/api/favorites', favorites_1.default);
 app.use('/api/applications', applications_1.default);
+app.use('/api/notifications', notifications_1.default);
 app.use('/api/admin', admin_1.default);
 // Health check
 app.get('/api/health', (req, res) => {
