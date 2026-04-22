@@ -8,13 +8,21 @@ import { Footer } from '../components/layout/footer';
 import { toast } from 'sonner';
 
 interface Notification {
-  id: string;
-  type: 'new' | 'deadline' | 'status' | 'application';
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
+  NotificationID?: string;
+  id?: string;
+  Type?: string;
+  type?: 'new' | 'deadline' | 'status' | 'application' | string;
+  Title?: string;
+  title?: string;
+  Message?: string;
+  message?: string;
+  CreatedAt?: string;
+  timestamp?: string;
+  IsRead?: boolean;
+  read?: boolean;
+  ScholarshipName?: string;
   scholarshipName?: string;
+  ApplicationStatus?: string;
   status?: string;
 }
 
@@ -38,92 +46,27 @@ export function NotificationsPage() {
 
       const userData = JSON.parse(user);
 
-      // Fetch applications
-      const appResponse = await fetch(`http://localhost:5000/api/applications/student/${userData.id}`, {
+      // Fetch notifications from database
+      const response = await fetch(`http://localhost:5000/api/notifications/student/${userData.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      // Fetch scholarships to check deadlines
-      const schResponse = await fetch('http://localhost:5000/api/scholarships');
-
-      if (appResponse.ok && schResponse.ok) {
-        const appData = await appResponse.json();
-        const schData = await schResponse.json();
-
-        const generatedNotifications: Notification[] = [];
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        // Generate notifications from applications
-        if (appData.data) {
-          appData.data.forEach((app: any) => {
-            const deadlineDate = new Date(app.Deadline);
-            const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-            // Deadline approaching notification
-            if (daysUntilDeadline > 0 && daysUntilDeadline <= 7) {
-              generatedNotifications.push({
-                id: `deadline-${app.ScholarshipID}`,
-                type: 'deadline',
-                title: 'Deadline Approaching',
-                message: `${app.ScholarshipName} deadline is ${daysUntilDeadline} day${daysUntilDeadline !== 1 ? 's' : ''} away`,
-                timestamp: new Date().toISOString(),
-                read: false,
-                scholarshipName: app.ScholarshipName
-              });
-            }
-
-            // Application status notifications
-            if (app.Status !== 'Pending') {
-              const statusType = app.Status === 'Approved' ? 'Approved' : app.Status === 'Rejected' ? 'Rejected' : 'Under Review';
-              generatedNotifications.push({
-                id: `status-${app.ApplicationID}`,
-                type: 'status',
-                title: `Application ${statusType}`,
-                message: `Your application for ${app.ScholarshipName} has been ${app.Status.toLowerCase()}`,
-                timestamp: app.LastUpdated || app.DateApplied,
-                read: false,
-                scholarshipName: app.ScholarshipName,
-                status: app.Status
-              });
-            }
-
-            // Recent application notification
-            const appliedDate = new Date(app.DateApplied);
-            const daysAgo = Math.floor((today.getTime() - appliedDate.getTime()) / (1000 * 60 * 60 * 24));
-            if (daysAgo === 0) {
-              generatedNotifications.push({
-                id: `applied-${app.ScholarshipID}`,
-                type: 'application',
-                title: 'Application Submitted',
-                message: `You have successfully applied for ${app.ScholarshipName}`,
-                timestamp: app.DateApplied,
-                read: false,
-                scholarshipName: app.ScholarshipName
-              });
-            }
-          });
-        }
-
-        // Generate notifications for new scholarships matching student profile
-        if (schData.data) {
-          const newScholarships = schData.data.slice(0, 3); // Show top 3 new scholarships
-          newScholarships.forEach((sch: any) => {
-            generatedNotifications.push({
-              id: `new-${sch.ScholarshipID}`,
-              type: 'new',
-              title: 'New Scholarship Available',
-              message: `Check out ${sch.ScholarshipName} from ${sch.Provider}`,
-              timestamp: new Date().toISOString(),
-              read: false,
-              scholarshipName: sch.ScholarshipName
-            });
-          });
-        }
-
-        setNotifications(generatedNotifications.reverse());
+      if (response.ok) {
+        const data = await response.json();
+        const transformedNotifications = data.data?.map((notif: any) => ({
+          id: String(notif.NotificationID),
+          NotificationID: notif.NotificationID,
+          type: notif.Type?.toLowerCase() || 'general',
+          title: notif.Title,
+          message: notif.Message,
+          timestamp: notif.CreatedAt,
+          read: notif.IsRead,
+          scholarshipName: notif.ScholarshipName,
+          status: notif.ApplicationStatus
+        })) || [];
+        setNotifications(transformedNotifications);
       } else {
         toast.error('Failed to load notifications');
       }
@@ -135,9 +78,11 @@ export function NotificationsPage() {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
+  const getNotificationIcon = (type: string | undefined) => {
+    const typeStr = (type || 'general').toLowerCase();
+    switch (typeStr) {
       case 'new':
+      case 'new_scholarship':
         return <Sparkles className="h-5 w-5 text-[#F5A623]" />;
       case 'deadline':
         return <Clock className="h-5 w-5 text-[#E67E22]" />;
@@ -149,13 +94,74 @@ export function NotificationsPage() {
     }
   };
 
-  const dismissNotification = (id: string) => {
-    setNotifications(notifications.filter(n => n.id !== id));
+  const markNotificationAsRead = async (id: string, notificationId: string | undefined) => {
+    if (!notificationId) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setNotifications(notifications.map(n => 
+          n.id === id ? { ...n, read: true } : n
+        ));
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
-    toast.success('All notifications marked as read');
+  const dismissNotification = async (id: string, notificationId: string | undefined) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (notificationId) {
+        await fetch(`http://localhost:5000/api/notifications/${notificationId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+      setNotifications(notifications.filter(n => n.id !== id));
+      toast.success('Notification dismissed');
+    } catch (error) {
+      console.error('Error dismissing notification:', error);
+      toast.error('Failed to dismiss notification');
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      const user = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+      
+      if (!user || !token) return;
+      
+      const userData = JSON.parse(user);
+      const response = await fetch('http://localhost:5000/api/notifications/mark-all-read', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ studentId: userData.id })
+      });
+
+      if (response.ok) {
+        setNotifications(notifications.map(n => ({ ...n, read: true })));
+        toast.success('All notifications marked as read');
+      } else {
+        toast.error('Failed to mark all as read');
+      }
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+      toast.error('Failed to mark all as read');
+    }
   };
 
   const getTimeAgo = (timestamp: string) => {
@@ -187,7 +193,7 @@ export function NotificationsPage() {
     );
   }
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.read && !n.IsRead).length;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FC]">
@@ -233,56 +239,63 @@ export function NotificationsPage() {
             </Card>
           ) : (
             <div className="space-y-2">
-              {notifications.map((notification) => (
-                <Card 
-                  key={notification.id}
-                  className={`transition-all cursor-pointer hover:shadow-md ${
-                    notification.read ? 'bg-white' : 'bg-blue-50'
-                  }`}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 mt-1">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <h3 className="font-semibold text-[#1A2E5A] text-sm">
-                              {notification.title}
-                            </h3>
-                            <p className="text-sm text-[#64748B] mt-1">
-                              {notification.message}
-                            </p>
-                          </div>
-                          <div className="flex-shrink-0 text-xs text-[#64748B] whitespace-nowrap ml-2">
-                            {getTimeAgo(notification.timestamp)}
-                          </div>
+              {notifications.map((notification) => {
+                const isRead = notification.read || notification.IsRead;
+                return (
+                  <Card 
+                    key={notification.id}
+                    className={`transition-all cursor-pointer hover:shadow-md ${
+                      isRead ? 'bg-white' : 'bg-blue-50'
+                    }`}
+                    onClick={() => !isRead && markNotificationAsRead(notification.id || '', notification.NotificationID?.toString())}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        <div className="shrink-0 mt-1">
+                          {getNotificationIcon(notification.type)}
                         </div>
-                        {notification.status && (
-                          <div className="mt-2">
-                            <Badge className={
-                              notification.status === 'Approved' ? 'bg-[#2ECC71] text-white' :
-                              notification.status === 'Rejected' ? 'bg-[#E74C3C] text-white' :
-                              'bg-blue-500 text-white'
-                            }>
-                              {notification.status}
-                            </Badge>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h3 className="font-semibold text-[#1A2E5A] text-sm">
+                                {notification.title}
+                              </h3>
+                              <p className="text-sm text-[#64748B] mt-1">
+                                {notification.message}
+                              </p>
+                            </div>
+                            <div className="shrink-0 text-xs text-[#64748B] whitespace-nowrap ml-2">
+                              {getTimeAgo(notification.timestamp || '')}
+                            </div>
                           </div>
-                        )}
+                          {(notification.status || notification.ApplicationStatus) && (
+                            <div className="mt-2">
+                              <Badge className={`${
+                                (notification.status || notification.ApplicationStatus) === 'Approved' ? 'bg-[#2ECC71] text-white' :
+                                (notification.status || notification.ApplicationStatus) === 'Rejected' ? 'bg-[#E74C3C] text-white' :
+                                'bg-blue-500 text-white'
+                              }`}>
+                                {notification.status || notification.ApplicationStatus}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            dismissNotification(notification.id || '', notification.NotificationID?.toString());
+                          }}
+                          className="text-[#64748B] hover:text-[#1A2E5A]"
+                        >
+                          ×
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => dismissNotification(notification.id)}
-                        className="text-[#64748B] hover:text-[#1A2E5A]"
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>

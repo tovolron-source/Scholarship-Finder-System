@@ -525,7 +525,7 @@ export function SearchPage() {
                   
                   return (
                     <Card key={scholarshipId} className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-5 space-y-4">
+                      <CardContent className="p-5 space-y-4 ">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex gap-2 flex-wrap">
                             <Badge className="bg-[#1A2E5A] text-white">{type}</Badge>
@@ -566,18 +566,18 @@ export function SearchPage() {
                           <span>{slots} slots</span>
                         </div>
 
-                        <div className="flex items-center justify-between pt-3 border-t gap-2">
+                        <div className="flex flex-col gap-3 pt-3 border-t">
                           <div>
                             <p className="text-lg font-bold text-[#F5A623]">{amount}</p>
                             <p className="text-xs text-[#64748B]">Due: {new Date(deadline).toLocaleDateString()}</p>
                           </div>
-                          <div className="flex gap-2">
-                            <Button asChild variant="outline" size="sm" className="text-[#1A2E5A]">
+                          <div className="flex gap-3 w-full">
+                            <Button asChild variant="outline" size="sm" className="flex-1 text-[#1A2E5A]">
                               <Link to={`/scholarship/${scholarshipId}`}>
                                 Details
                               </Link>
                             </Button>
-                            <Button asChild size="sm" className="bg-[#1A2E5A] text-white hover:bg-[#0F1A36]">
+                            <Button asChild size="sm" className="flex-1 bg-[#1A2E5A] text-white hover:bg-[#0F1A36]">
                               <Link to={`/apply/${scholarshipId}`}>
                                 Apply
                               </Link>
