@@ -28,16 +28,8 @@ export function LandingPage() {
           const data = await response.json();
           const allScholarships = data.data || [];
           
-          let scholarshipsToDisplay = allScholarships;
-          
-          // If logged in, filter by user eligibility, otherwise just get first 3
-          if (isLogged && storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-            scholarshipsToDisplay = filterMatchedScholarships(allScholarships, parsedUser);
-          }
-          
-          // Get first 3 scholarships to display
-          setFeaturedScholarships(scholarshipsToDisplay.slice(0, 3));
+          // Get first 3 scholarships as featured scholarships
+          setFeaturedScholarships(allScholarships.slice(0, 3));
         }
       } catch (error) {
         console.error('Error fetching scholarships:', error);
@@ -47,53 +39,6 @@ export function LandingPage() {
 
     fetchScholarships();
   }, []);
-
-  const filterMatchedScholarships = (scholarships: any[], userProfile: any) => {
-    const userGPA = userProfile.GPA || userProfile.gpa || 0;
-    const userCourse = userProfile.Course || userProfile.course || '';
-    const userYearLevel = userProfile.YearLevel || userProfile.yearLevel || '';
-    
-    return scholarships.filter(scholarship => {
-      // Get GWA requirement
-      const scholarshipGWA = scholarshipMapper.getGwaRequirement(scholarship) || 0;
-      
-      // Check GWA eligibility - user's GWA must be <= scholarship requirement (1.0 best, 5.0 worst)
-      const meetsGWA = userGPA <= scholarshipGWA;
-      
-      if (!meetsGWA) {
-        return false;
-      }
-      
-      // Get eligibility requirements
-      let eligReqs: any = {};
-      if (scholarship.EligibilityRequirements) {
-        try {
-          eligReqs = typeof scholarship.EligibilityRequirements === 'string' 
-            ? JSON.parse(scholarship.EligibilityRequirements) 
-            : scholarship.EligibilityRequirements;
-        } catch (e) {
-          eligReqs = {};
-        }
-      }
-      
-      // Check course eligibility
-      const requiredCourses = eligReqs.courses || [];
-      const meetsCourse = requiredCourses.length === 0 || 
-                         requiredCourses.includes('All Programs') || 
-                         requiredCourses.includes(userCourse);
-      
-      if (!meetsCourse) {
-        return false;
-      }
-      
-      // Check year level eligibility
-      const requiredYearLevels = eligReqs.yearLevel || [];
-      const meetsYearLevel = requiredYearLevels.length === 0 || 
-                            requiredYearLevels.includes(userYearLevel);
-      
-      return meetsYearLevel;
-    });
-  };
 
   const handleSearch = () => {
     // Check if user is logged in by checking localStorage for token
@@ -175,18 +120,15 @@ export function LandingPage() {
 
 
 
-      {/* Featured/Matched Scholarships */}
+      {/* Featured Scholarships */}
       <section className="py-16 bg-[#F8F9FC]">
         <div className="container mx-auto px-6">
           <div className="text-center mb-12">
             <h2 style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl md:text-4xl text-[#1A2E5A] mb-4">
-              {isLoggedIn ? 'Matched Scholarships' : 'Featured Scholarships'}
+              Featured Scholarships
             </h2>
             <p className="text-[#64748B] max-w-2xl mx-auto">
-              {isLoggedIn 
-                ? 'Scholarships matched to your profile and eligibility criteria'
-                : 'Discover top scholarship opportunities handpicked for students like you'
-              }
+              Discover top scholarship opportunities handpicked for students like you
             </p>
           </div>
 

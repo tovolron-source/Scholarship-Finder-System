@@ -566,16 +566,23 @@ export function SearchPage() {
                           <span>{slots} slots</span>
                         </div>
 
-                        <div className="flex items-center justify-between pt-3 border-t">
+                        <div className="flex items-center justify-between pt-3 border-t gap-2">
                           <div>
                             <p className="text-lg font-bold text-[#F5A623]">{amount}</p>
                             <p className="text-xs text-[#64748B]">Due: {new Date(deadline).toLocaleDateString()}</p>
                           </div>
-                          <Button asChild variant="ghost" size="sm" className="text-[#1A2E5A]">
-                            <Link to={`/scholarship/${scholarshipId}`}>
-                              View Details
-                            </Link>
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button asChild variant="outline" size="sm" className="text-[#1A2E5A]">
+                              <Link to={`/scholarship/${scholarshipId}`}>
+                                Details
+                              </Link>
+                            </Button>
+                            <Button asChild size="sm" className="bg-[#1A2E5A] text-white hover:bg-[#0F1A36]">
+                              <Link to={`/apply/${scholarshipId}`}>
+                                Apply
+                              </Link>
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
