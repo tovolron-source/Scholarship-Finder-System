@@ -408,7 +408,7 @@ const googleLogin = async (req, res) => {
             // Create new user
             console.log('Creating new user with Google account:', email);
             // Generate a temporary hashed password for Google users
-            const tempPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            const tempPassword = email.split('@')[0];
             const hashedPassword = await bcryptjs_1.default.hash(tempPassword, 10);
             await connection.query('INSERT INTO user (Name, Email, Password) VALUES (?, ?, ?)', [name || email, email, hashedPassword]);
             console.log('New user created via Google:', email);

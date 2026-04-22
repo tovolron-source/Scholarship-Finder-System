@@ -136,6 +136,31 @@ async function initializeTables() {
     `);
 
     console.log('✅ Application table ready');
+
+    // Create notifications table if it doesn't exist
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS notification (
+        NotificationID INT AUTO_INCREMENT PRIMARY KEY,
+        StudentID INT NOT NULL,
+        Type ENUM('deadline', 'status', 'new_scholarship', 'application', 'general') DEFAULT 'general',
+        Title VARCHAR(255) NOT NULL,
+        Message LONGTEXT NOT NULL,
+        ScholarshipID INT,
+        ApplicationID INT,
+        IsRead BOOLEAN DEFAULT FALSE,
+        CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (StudentID) REFERENCES user(id) ON DELETE CASCADE,
+        FOREIGN KEY (ScholarshipID) REFERENCES scholarship(ScholarshipID) ON DELETE SET NULL,
+        FOREIGN KEY (ApplicationID) REFERENCES application(ApplicationID) ON DELETE SET NULL,
+        KEY idx_student_id (StudentID),
+        KEY idx_type (Type),
+        KEY idx_is_read (IsRead),
+        KEY idx_created_at (CreatedAt)
+      )
+    `);
+
+    console.log('✅ Notification table ready');
     connection.release();
   } catch (error) {
     console.error('❌ Error initializing tables:', error);

@@ -7,11 +7,14 @@ const express_1 = __importDefault(require("express"));
 const adminAuth_1 = require("../middleware/adminAuth");
 const adminScholarshipController_1 = require("../controllers/adminScholarshipController");
 const authController_1 = require("../controllers/authController");
+const applicationsController_1 = require("../controllers/applicationsController");
 const router = express_1.default.Router();
 // Admin Scholarship Management
 router.post('/scholarships', adminAuth_1.verifyAdminToken, adminScholarshipController_1.createScholarship);
 router.put('/scholarships/:id', adminAuth_1.verifyAdminToken, adminScholarshipController_1.updateScholarship);
 router.delete('/scholarships/:id', adminAuth_1.verifyAdminToken, adminScholarshipController_1.deleteScholarship);
+// Admin Application Management
+router.get('/scholarships/:id/applicants', adminAuth_1.verifyAdminToken, applicationsController_1.getApplicationsByScholarship);
 // Account Settings (accessible to admins and students)
 router.put('/change-email/:id', authController_1.changeEmail);
 router.put('/change-password/:id', authController_1.changePassword);

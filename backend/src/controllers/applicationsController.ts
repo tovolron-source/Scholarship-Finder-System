@@ -142,7 +142,7 @@ export async function createApplication(req: Request, res: Response) {
 // Get applications for a specific scholarship (admin)
 export async function getApplicationsByScholarship(req: Request, res: Response) {
   try {
-    const { scholarshipId } = req.params;
+    const scholarshipId = req.params.scholarshipId || req.params.id;
 
     if (!scholarshipId) {
       res.status(400).json({
@@ -156,12 +156,14 @@ export async function getApplicationsByScholarship(req: Request, res: Response) 
     const [applications] = await connection.query(
       `SELECT 
         a.ApplicationID,
-        a.StudentID,
+        a.StudentID as UserID,
         a.ScholarshipID,
         a.Status,
-        a.DateApplied,
+        a.DateApplied as AppliedDate,
         sp.fullName,
-        u.Email
+        u.Email,
+        sp.address as Address,
+        sp.contactNumber as PhoneNumber
       FROM application a 
       JOIN user u ON a.StudentID = u.id 
       LEFT JOIN student_profile sp ON u.id = sp.userId
@@ -171,10 +173,20 @@ export async function getApplicationsByScholarship(req: Request, res: Response) 
     );
     connection.release();
 
+    // Transform fullName into FirstName and LastName
+    const transformedApplications = (applications as any[]).map(app => {
+      const nameParts = app.fullName ? app.fullName.split(' ') : ['', ''];
+      return {
+        ...app,
+        FirstName: nameParts[0] || '',
+        LastName: nameParts.slice(1).join(' ') || ''
+      };
+    });
+
     res.json({
       success: true,
-      data: applications,
-      count: (applications as any[]).length
+      data: transformedApplications,
+      count: transformedApplications.length
     });
   } catch (error) {
     console.error('Error fetching applications:', error);
@@ -267,6 +279,74 @@ export async function getApplicationById(req: Request, res: Response) {
     res.status(500).json({
       success: false,
       message: 'Error fetching application',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}
+
+// Approve application (admin)
+export async function approveApplication(req: Request, res: Response) {
+  try {
+    const { applicationId } = req.params;
+
+    if (!applicationId) {
+      res.status(400).json({
+        success: false,
+        message: 'Application ID is required'
+      });
+      return;
+    }
+
+    const connection = await pool.getConnection();
+    await connection.query(
+      'UPDATE application SET Status = ?, LastUpdated = CURRENT_TIMESTAMP WHERE ApplicationID = ?',
+      ['Approved', applicationId]
+    );
+    connection.release();
+
+    res.json({
+      success: true,
+      message: 'Application approved successfully'
+    });
+  } catch (error) {
+    console.error('Error approving application:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error approving application',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}
+
+// Reject application (admin)
+export async function rejectApplication(req: Request, res: Response) {
+  try {
+    const { applicationId } = req.params;
+
+    if (!applicationId) {
+      res.status(400).json({
+        success: false,
+        message: 'Application ID is required'
+      });
+      return;
+    }
+
+    const connection = await pool.getConnection();
+    await connection.query(
+      'UPDATE application SET Status = ?, LastUpdated = CURRENT_TIMESTAMP WHERE ApplicationID = ?',
+      ['Rejected', applicationId]
+    );
+    connection.release();
+
+    res.json({
+      success: true,
+      message: 'Application rejected successfully'
+    });
+  } catch (error) {
+    console.error('Error rejecting application:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error rejecting application',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }

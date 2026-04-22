@@ -15,5 +15,7 @@ router.get('/:applicationId', applicationsController_1.getApplicationById);
 // Admin routes
 router.get('/scholarship/:scholarshipId', applicationsController_1.getApplicationsByScholarship);
 router.put('/:applicationId/status', applicationsController_1.updateApplicationStatus);
+router.put('/:applicationId/approve', applicationsController_1.approveApplication);
+router.put('/:applicationId/reject', applicationsController_1.rejectApplication);
 exports.default = router;
 //# sourceMappingURL=applications.js.map

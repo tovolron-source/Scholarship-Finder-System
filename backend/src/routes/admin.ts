@@ -2,6 +2,7 @@ import express from 'express';
 import { verifyAdminToken } from '../middleware/adminAuth';
 import { createScholarship, updateScholarship, deleteScholarship } from '../controllers/adminScholarshipController';
 import { changeEmail, changePassword } from '../controllers/authController';
+import { getApplicationsByScholarship } from '../controllers/applicationsController';
 
 const router = express.Router();
 
@@ -9,6 +10,9 @@ const router = express.Router();
 router.post('/scholarships', verifyAdminToken, createScholarship);
 router.put('/scholarships/:id', verifyAdminToken, updateScholarship);
 router.delete('/scholarships/:id', verifyAdminToken, deleteScholarship);
+
+// Admin Application Management
+router.get('/scholarships/:id/applicants', verifyAdminToken, getApplicationsByScholarship);
 
 // Account Settings (accessible to admins and students)
 router.put('/change-email/:id', changeEmail);

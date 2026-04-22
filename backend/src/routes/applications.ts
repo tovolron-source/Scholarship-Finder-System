@@ -5,7 +5,9 @@ import {
   createApplication, 
   getApplicationsByScholarship,
   updateApplicationStatus,
-  getApplicationById 
+  getApplicationById,
+  approveApplication,
+  rejectApplication
 } from '../controllers/applicationsController';
 import { verifyToken } from '../middleware/auth';
 
@@ -20,5 +22,7 @@ router.get('/:applicationId', getApplicationById);
 // Admin routes
 router.get('/scholarship/:scholarshipId', getApplicationsByScholarship);
 router.put('/:applicationId/status', updateApplicationStatus);
+router.put('/:applicationId/approve', approveApplication);
+router.put('/:applicationId/reject', rejectApplication);
 
 export default router;

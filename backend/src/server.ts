@@ -7,6 +7,7 @@ import scholarshipRoutes from './routes/scholarships';
 import favoriteRoutes from './routes/favorites';
 import adminRoutes from './routes/admin';
 import applicationsRoutes from './routes/applications';
+import notificationRoutes from './routes/notifications';
 import pool from './config/database';
 
 dotenv.config();
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/scholarships', scholarshipRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/applications', applicationsRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Health check
