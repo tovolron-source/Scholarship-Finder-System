@@ -96,7 +96,7 @@ export function ApplyPage() {
       }
 
       const userData = JSON.parse(user);
-      
+      /*
       // Create FormData to handle file uploads
       const applicationFormData = new FormData();
       applicationFormData.append('StudentID', userData.id);
@@ -113,13 +113,20 @@ export function ApplyPage() {
       if (formData.recommendation) {
         applicationFormData.append('recommendation', formData.recommendation);
       }
-      
+      */
+     
+     // Send as JSON since document uploads are disabled on the backend for now
       const response = await fetch('http://localhost:5000/api/applications', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        body: applicationFormData
+        body: JSON.stringify({
+          StudentID: userData.id,
+          ScholarshipID: id!,
+          PersonalStatement: formData.personalStatement
+        })
       });
 
       if (response.ok) {
