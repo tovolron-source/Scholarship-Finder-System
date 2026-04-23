@@ -363,3 +363,84 @@ export async function rejectApplication(req: Request, res: Response) {
     });
   }
 }
+
+// Withdraw application (student)
+export async function withdrawApplication(req: Request, res: Response) {
+  try {
+    const { applicationId } = req.params;
+    const { studentId } = req.body;
+
+    if (!applicationId) {
+      res.status(400).json({
+        success: false,
+        message: 'Application ID is required'
+      });
+      return;
+    }
+
+    const connection = await pool.getConnection();
+
+    // Verify application exists and belongs to the student
+    const [application] = await connection.query(
+      'SELECT ApplicationID, StudentID FROM application WHERE ApplicationID = ?',
+      [applicationId]
+    );
+
+    if ((application as any[]).length === 0) {
+      connection.release();
+      res.status(404).json({
+        success: false,
+        message: 'Application not found'
+      });
+      return;
+    }
+
+    const appData = (application as any[])[0];
+    
+    // If studentId is provided, verify it matches
+    if (studentId && appData.StudentID !== studentId) {
+      connection.release();
+      res.status(403).json({
+        success: false,
+        message: 'You are not authorized to withdraw this application'
+      });
+      return;
+    }
+
+    // Only allow withdrawal of Pending applications
+    const [fullApp] = await connection.query(
+      'SELECT Status FROM application WHERE ApplicationID = ?',
+      [applicationId]
+    );
+
+    const appStatus = (fullApp as any[])[0]?.Status;
+    if (appStatus && appStatus !== 'Pending') {
+      connection.release();
+      res.status(400).json({
+        success: false,
+        message: `Cannot withdraw ${appStatus} application. Only pending applications can be withdrawn.`
+      });
+      return;
+    }
+
+    // Delete the application
+    await connection.query(
+      'DELETE FROM application WHERE ApplicationID = ?',
+      [applicationId]
+    );
+
+    connection.release();
+
+    res.json({
+      success: true,
+      message: 'Application withdrawn successfully'
+    });
+  } catch (error) {
+    console.error('Error withdrawing application:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error withdrawing application',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}

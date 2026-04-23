@@ -9,7 +9,8 @@ import {
   updateApplicationStatus,
   getApplicationById,
   approveApplication,
-  rejectApplication
+  rejectApplication,
+  withdrawApplication
 } from '../controllers/applicationsController';
 import { verifyToken } from '../middleware/auth';
 
@@ -56,5 +57,6 @@ router.get('/scholarship/:scholarshipId', getApplicationsByScholarship);
 router.put('/:applicationId/status', updateApplicationStatus);
 router.put('/:applicationId/approve', approveApplication);
 router.put('/:applicationId/reject', rejectApplication);
+router.delete('/:applicationId/withdraw', verifyToken, withdrawApplication);
 
 export default router;
