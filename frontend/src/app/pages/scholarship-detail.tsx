@@ -429,8 +429,8 @@ export function ScholarshipDetailPage() {
                         <p className="text-sm text-[#1A2E5A]">GWA</p>
                         <p className="text-xs text-[#64748B]">
                           {meetsGWA 
-                            ? `Your GWA (${user?.gpa || user?.GPA}) meets requirement (${eligReq?.gwa || 'Not specified'})` 
-                            : `Your GWA (${user?.gpa || user?.GPA}) doesn't meet requirement (${eligReq?.gwa || 'Not specified'})`}
+                            ? `Your GWA (${user?.gwa || user?.GWA}) meets requirement (${eligReq?.gwa || 'Not specified'})` 
+                            : `Your GWA (${user?.gwa || user?.GWA}) doesn't meet requirement (${eligReq?.gwa || 'Not specified'})`}
                         </p>
                       </div>
                     </div>

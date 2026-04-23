@@ -156,7 +156,7 @@ export function DesignSystemPage() {
               <Badge className="bg-[#2ECC71] text-white">✓ Eligible</Badge>
               <Badge className="bg-[#E67E22] text-white">⚠ Partial Match</Badge>
               <Badge className="bg-[#E74C3C] text-white">Rejected</Badge>
-              <Badge variant="outline">GPA 3.5+</Badge>
+              <Badge variant="outline">GWA 3.5+</Badge>
               <Badge variant="secondary">Secondary</Badge>
             </div>
           </CardContent>
@@ -182,7 +182,7 @@ export function DesignSystemPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Slider (GPA: {sliderValue[0].toFixed(1)})</label>
+              <label className="text-sm font-medium">Slider (GWA: {sliderValue[0].toFixed(1)})</label>
               <Slider 
                 value={sliderValue} 
                 onValueChange={setSliderValue}

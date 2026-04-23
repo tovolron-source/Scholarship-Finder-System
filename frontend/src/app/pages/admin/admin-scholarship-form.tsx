@@ -7,6 +7,7 @@ import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Textarea } from '../../components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Checkbox } from '../../components/ui/checkbox';
 import { toast } from 'sonner';
 
 export function CreateScholarshipPage() {
@@ -26,6 +27,7 @@ export function CreateScholarshipPage() {
     ApplicationMethod: '',
     GoogleFormLink: '',
     ProviderContact: '',
+    GWARequirement: '',
   });
 
   const [benefits, setBenefits] = useState<string[]>([]);
@@ -37,7 +39,7 @@ export function CreateScholarshipPage() {
   const [eligibility, setEligibility] = useState({
     gwa: '',
     courses: '',
-    yearLevel: ''
+    yearLevel: [] as string[]
   });
 
   useEffect(() => {
@@ -81,6 +83,7 @@ export function CreateScholarshipPage() {
           ApplicationMethod: scholarship.ApplicationMethod || '',
           GoogleFormLink: scholarship.GoogleFormLink || '',
           ProviderContact: scholarship.ProviderContact || '',
+          GWARequirement: scholarship.GWARequirement || '',
         });
 
         // Parse Benefits
@@ -102,13 +105,14 @@ export function CreateScholarshipPage() {
         // Parse Eligibility Requirements
         try {
           const eligData = typeof scholarship.EligibilityRequirements === 'string' ? JSON.parse(scholarship.EligibilityRequirements) : scholarship.EligibilityRequirements;
+          const yearLevelArray = eligData?.yearLevel || [];
           setEligibility({
             gwa: eligData?.gwa || '',
             courses: eligData?.courses || '',
-            yearLevel: eligData?.yearLevel || ''
+            yearLevel: Array.isArray(yearLevelArray) ? yearLevelArray : (yearLevelArray ? [yearLevelArray] : [])
           });
         } catch {
-          setEligibility({ gwa: '', courses: '', yearLevel: '' });
+          setEligibility({ gwa: '', courses: '', yearLevel: [] });
         }
       } else {
         toast.error('Failed to load scholarship');
@@ -145,6 +149,15 @@ export function CreateScholarshipPage() {
       // Check for exactly 1 decimal place
       if (!/^\d+\.\d$/.test(eligibility.gwa.trim())) {
         toast.error('GWA must have exactly 1 decimal place (e.g., 3.5)');
+        return;
+      }
+    }
+
+    // Validation for GWARequirement (auto-populated from gwa)
+    if (formData.GWARequirement) {
+      const gwaReqValue = parseFloat(formData.GWARequirement);
+      if (isNaN(gwaReqValue) || gwaReqValue < 1.0 || gwaReqValue > 5.0) {
+        toast.error('GWA Requirement must be between 1.0 (best) and 5.0 (worst)');
         return;
       }
     }
@@ -474,7 +487,13 @@ export function CreateScholarshipPage() {
                       min="1.0"
                       max="5.0"
                       value={eligibility.gwa}
-                      onChange={(e) => setEligibility({ ...eligibility, gwa: e.target.value })}
+                      onChange={(e) => {
+                        setEligibility({ ...eligibility, gwa: e.target.value });
+                        // Auto-populate GWA Requirement with the minimum GWA value
+                        if (e.target.value) {
+                          setFormData({ ...formData, GWARequirement: e.target.value });
+                        }
+                      }}
                       placeholder="1.0 - 5.0"
                       className="mt-2"
                     />
@@ -492,19 +511,50 @@ export function CreateScholarshipPage() {
                   </div>
 
                   <div>
-                    <Label htmlFor="yearLevel">Year Level</Label>
-                    <Select value={eligibility.yearLevel} onValueChange={(value) => setEligibility({ ...eligibility, yearLevel: value })}>
-                      <SelectTrigger className="mt-2">
-                        <SelectValue placeholder="Select year level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Any Year">Any Year</SelectItem>
-                        <SelectItem value="1st Year">1st Year</SelectItem>
-                        <SelectItem value="2nd Year">2nd Year</SelectItem>
-                        <SelectItem value="3rd Year">3rd Year</SelectItem>
-                        <SelectItem value="4th Year">4th Year</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="gwaReq">GWA Requirement (Auto-set)</Label>
+                    <Input
+                      id="gwaReq"
+                      type="number"
+                      step="0.1"
+                      min="1.0"
+                      max="5.0"
+                      value={formData.GWARequirement}
+                      onChange={(e) => setFormData({ ...formData, GWARequirement: e.target.value })}
+                      placeholder="Auto-populated from Minimum GWA"
+                      className="mt-2"
+                      disabled
+                    />
+                  </div>
+                </div>
+
+                {/* Year Level Checkboxes */}
+                <div>
+                  <Label>Year Levels Eligible for Application</Label>
+                  <div className="mt-2 space-y-2 border rounded-lg p-4 bg-gray-50">
+                    {['1st Year', '2nd Year', '3rd Year', '4th Year'].map((year) => (
+                      <div key={year} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`year-${year}`}
+                          checked={eligibility.yearLevel.includes(year)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setEligibility({
+                                ...eligibility,
+                                yearLevel: [...eligibility.yearLevel, year]
+                              });
+                            } else {
+                              setEligibility({
+                                ...eligibility,
+                                yearLevel: eligibility.yearLevel.filter(y => y !== year)
+                              });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`year-${year}`} className="font-normal cursor-pointer">
+                          {year}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

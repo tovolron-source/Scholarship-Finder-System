@@ -221,7 +221,7 @@ export function LandingPage() {
               </div>
               <h3 className="text-xl font-semibold text-[#1A2E5A]">Register & Create Profile</h3>
               <p className="text-[#64748B]">
-                Sign up and complete your academic profile with your GPA, field of study, and other relevant information.
+                Sign up and complete your academic profile with your GWA, field of study, and other relevant information.
               </p>
             </div>
 

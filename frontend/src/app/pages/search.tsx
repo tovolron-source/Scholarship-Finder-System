@@ -413,7 +413,7 @@ export function SearchPage() {
                 <SelectContent>
                   <SelectItem value="relevance">Relevance</SelectItem>
                   <SelectItem value="deadline">Deadline</SelectItem>
-                  <SelectItem value="gpa">GPA Requirement</SelectItem>
+                  <SelectItem value="gwa">GWA Requirement</SelectItem>
                   <SelectItem value="newest">Newest</SelectItem>
                 </SelectContent>
               </Select>
@@ -440,7 +440,7 @@ export function SearchPage() {
                 ))}
                 {gwaRange[1] < 4.0 && (
                   <Badge variant="secondary" className="gap-1">
-                    GPA {gwaRange[1].toFixed(1)} max
+                    GWA {gwaRange[1].toFixed(1)} max
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => setGwaRange([1.0, 4.0])}

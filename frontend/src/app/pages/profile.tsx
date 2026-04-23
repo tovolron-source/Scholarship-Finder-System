@@ -265,7 +265,7 @@ export function ProfilePage() {
             school: data.user.school || userData.school,
             course: data.user.course || userData.course,
             yearLevel: data.user.yearLevel || userData.yearLevel,
-            gpa: data.user.gpa !== undefined ? data.user.gpa : userData.gpa,
+            gwa: data.user.gwa !== undefined ? data.user.gwa : userData.gwa,
             financialStatus: data.user.financialStatus || userData.financialStatus,
             profileCompletion: data.user.profileCompletion !== undefined ? data.user.profileCompletion : userData.profileCompletion,
             profilePhoto: remoteProfilePhoto
