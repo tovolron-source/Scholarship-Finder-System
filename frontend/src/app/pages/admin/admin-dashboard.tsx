@@ -319,15 +319,16 @@ export function AdminDashboardPage() {
                         <div>
                           <p className="text-sm text-[#64748B]">Status</p>
                           <p className={`font-medium ${
-                            applicant.Status === 'approved' ? 'text-green-600' :
-                            applicant.Status === 'rejected' ? 'text-red-600' :
+                            applicant.Status === 'Approved' ? 'text-green-600' :
+                            applicant.Status === 'Rejected' ? 'text-red-600' :
+                            applicant.Status === 'Under Review' ? 'text-blue-600' :
                             'text-yellow-600'
                           }`}>
                             {applicant.Status || 'Pending'}
                           </p>
                         </div>
                         <div className="flex gap-2 justify-end">
-                          {applicant.Status === 'pending' && (
+                          {applicant.Status === 'Pending' && (
                             <>
                               <Button
                                 size="sm"
@@ -348,13 +349,15 @@ export function AdminDashboardPage() {
                               </Button>
                             </>
                           )}
-                          {applicant.Status !== 'pending' && (
+                          {applicant.Status !== 'Pending' && (
                             <span className={`px-3 py-1 rounded text-xs font-medium ${
-                              applicant.Status === 'approved' 
+                              applicant.Status === 'Approved' 
                                 ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
+                                : applicant.Status === 'Rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-blue-100 text-blue-800'
                             }`}>
-                              {applicant.Status === 'approved' ? 'Approved' : 'Rejected'}
+                              {applicant.Status}
                             </span>
                           )}
                         </div>

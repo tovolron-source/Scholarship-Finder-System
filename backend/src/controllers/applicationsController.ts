@@ -86,10 +86,16 @@ export async function checkApplicationExists(req: Request, res: Response) {
 }
 
 // Create new application
+// NOTE: Document uploads are temporarily disabled. Files are now optional.
+// File: backend/src/controllers/applicationsController.ts
+// The file handling code below remains for future use but is not required.
 export async function createApplication(req: Request, res: Response) {
   try {
     const { StudentID, ScholarshipID, PersonalStatement } = req.body;
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+    // NOTE: File uploads disabled - the files parameter is now always undefined
+    // To re-enable, uncomment the line below and ensure multer middleware is configured in routes
+    // const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+    const files = undefined; // DISABLED: File uploads are now disabled
 
     if (!StudentID || !ScholarshipID) {
       res.status(400).json({
@@ -310,15 +316,43 @@ export async function approveApplication(req: Request, res: Response) {
     }
 
     const connection = await pool.getConnection();
+
+    // Get application details for notification
+    const [appDetails] = await connection.query(
+      `SELECT a.StudentID, a.ScholarshipID, s.ScholarshipName 
+       FROM application a 
+       JOIN scholarship s ON a.ScholarshipID = s.ScholarshipID 
+       WHERE a.ApplicationID = ?`,
+      [applicationId]
+    );
+
+    // Update application status
     await connection.query(
       'UPDATE application SET Status = ?, LastUpdated = CURRENT_TIMESTAMP WHERE ApplicationID = ?',
       ['Approved', applicationId]
     );
+
+    // Create notification for the student
+    if ((appDetails as any[]).length > 0) {
+      const app = (appDetails as any[])[0];
+      await connection.query(
+        `INSERT INTO notification (StudentID, Type, Title, Message, ScholarshipID, ApplicationID, IsRead)
+         VALUES (?, 'status', 'Application Approved!', ?, ?, ?, FALSE)`,
+        [
+          app.StudentID,
+          `Congratulations! Your application for ${app.ScholarshipName} has been approved. You will be contacted with further instructions.`,
+          app.ScholarshipID,
+          applicationId
+        ]
+      );
+      console.log(`✅ Approval notification created for application ${applicationId}`);
+    }
+
     connection.release();
 
     res.json({
       success: true,
-      message: 'Application approved successfully'
+      message: 'Application approved successfully and notification sent to student'
     });
   } catch (error) {
     console.error('Error approving application:', error);
@@ -344,15 +378,43 @@ export async function rejectApplication(req: Request, res: Response) {
     }
 
     const connection = await pool.getConnection();
+
+    // Get application details for notification
+    const [appDetails] = await connection.query(
+      `SELECT a.StudentID, a.ScholarshipID, s.ScholarshipName 
+       FROM application a 
+       JOIN scholarship s ON a.ScholarshipID = s.ScholarshipID 
+       WHERE a.ApplicationID = ?`,
+      [applicationId]
+    );
+
+    // Update application status
     await connection.query(
       'UPDATE application SET Status = ?, LastUpdated = CURRENT_TIMESTAMP WHERE ApplicationID = ?',
       ['Rejected', applicationId]
     );
+
+    // Create notification for the student
+    if ((appDetails as any[]).length > 0) {
+      const app = (appDetails as any[])[0];
+      await connection.query(
+        `INSERT INTO notification (StudentID, Type, Title, Message, ScholarshipID, ApplicationID, IsRead)
+         VALUES (?, 'status', 'Application Status Update', ?, ?, ?, FALSE)`,
+        [
+          app.StudentID,
+          `Your application for ${app.ScholarshipName} was not selected at this time. Please check other opportunities.`,
+          app.ScholarshipID,
+          applicationId
+        ]
+      );
+      console.log(`⚠️ Rejection notification created for application ${applicationId}`);
+    }
+
     connection.release();
 
     res.json({
       success: true,
-      message: 'Application rejected successfully'
+      message: 'Application rejected successfully and notification sent to student'
     });
   } catch (error) {
     console.error('Error rejecting application:', error);

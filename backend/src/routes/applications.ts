@@ -45,11 +45,22 @@ const upload = multer({
 // Student routes
 router.get('/student/:studentId', verifyToken, getApplicationsByStudent);
 router.get('/check/:studentId/:scholarshipId', checkApplicationExists);
-router.post('/', verifyToken, upload.fields([
+// DOCUMENT UPLOADS DISABLED FOR NOW
+// File: backend/src/routes/applications.ts
+// The multer upload middleware is commented out below to disable file uploads.
+// To re-enable: uncomment the upload.fields() configuration and add it to the POST /api/applications route
+
+// Original multer configuration (DISABLED):
+/*
+upload.fields([
   { name: 'transcript', maxCount: 1 },
   { name: 'idDocument', maxCount: 1 },
   { name: 'recommendation', maxCount: 1 }
-]), createApplication);
+])
+*/
+
+// Updated route without file uploads (currently active):
+router.post('/', verifyToken, createApplication);
 router.get('/:applicationId', getApplicationById);
 
 // Admin routes
