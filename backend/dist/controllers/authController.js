@@ -130,7 +130,7 @@ const updateUser = async (req, res) => {
         }
         // Update or create student profile with all profile information
         await createOrUpdateStudentProfile(connection, parseInt(userId), fullName, gender, address, school, course, yearLevel, gwa, financialStatus, contactNumber, profilePhoto, profileCompletion);
-        const [updatedUsers] = await connection.query('SELECT u.id, u.Email, u.Name, sp.gender, sp.address, sp.fullName, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gpa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?', [userId]);
+        const [updatedUsers] = await connection.query('SELECT u.id, u.Email, u.Name, sp.gender, sp.address, sp.fullName, sp.contactNumber, sp.profilePhoto, sp.profileCompletion, sp.school, sp.course, sp.yearLevel, sp.gwa, sp.financialStatus FROM user u LEFT JOIN student_profile sp ON u.id = sp.userId WHERE u.id = ?', [userId]);
         connection.release();
         const updatedUser = updatedUsers[0];
         res.json({

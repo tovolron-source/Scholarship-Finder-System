@@ -59,9 +59,38 @@ export function ApplicationsPage() {
     return styles[status as keyof typeof styles] || 'bg-gray-500 text-white';
   };
 
-  const handleWithdraw = (id: string) => {
-    setApplications(applications.filter(app => app.ApplicationID !== id));
-    toast.success('Application withdrawn');
+  const handleWithdraw = async (id: string) => {
+    try {
+      const user = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+
+      if (!user || !token) {
+        toast.error('Please log in to withdraw your application');
+        return;
+      }
+
+      const userData = JSON.parse(user);
+
+      const response = await fetch(`http://localhost:5000/api/applications/${id}/withdraw`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ studentId: userData.id })
+      });
+
+      if (response.ok) {
+        setApplications(applications.filter(app => app.ApplicationID !== Number(id)));
+        toast.success('Application withdrawn successfully');
+      } else {
+        const data = await response.json();
+        toast.error(data.message || 'Failed to withdraw application');
+      }
+    } catch (error) {
+      console.error('Error withdrawing application:', error);
+      toast.error('Error withdrawing application');
+    }
   };
 
   if (loading) {
@@ -305,11 +334,11 @@ export function ApplicationsPage() {
                         </DialogContent>
                       </Dialog>
 
-                      {app.status === 'Pending' && (
+                      {app.Status === 'Pending' && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleWithdraw(app.id)}
+                          onClick={() => handleWithdraw(app.ApplicationID.toString())}
                           className="flex-1 text-[#E74C3C] hover:text-[#E74C3C] hover:bg-red-50 border-[#E74C3C]"
                         >
                           <X className="mr-2 h-4 w-4" />
