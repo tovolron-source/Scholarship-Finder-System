@@ -24,9 +24,7 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-12 h-12 bg-[#F5A623] rounded-lg flex items-center justify-center">
-                <span className="text-[#1A2E5A] font-bold text-2xl">S</span>
-              </div>
+              <img src='/logo.png' alt="logo" className = "w-15 h-15 rounded-full object-cover"/>
               <span style={{ fontFamily: 'var(--font-heading)' }} className="text-2xl text-[#F5A623]">
                 Scholarship Finder
               </span>

@@ -195,9 +195,11 @@ export function LandingPage() {
           </div>
 
           <div className="text-center">
-            <Button asChild size="lg" className="bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white">
-              <Link to="/search">View All Scholarships</Link>
-            </Button>
+            {!isAdmin && (
+              <Button asChild size="lg" className="bg-[#1A2E5A] hover:bg-[#2A3E6A] text-white">
+                <Link to="/search">View All Scholarships</Link>
+              </Button>
+            )}
           </div>
         </div>
       </section>

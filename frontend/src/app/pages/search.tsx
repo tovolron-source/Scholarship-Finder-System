@@ -153,7 +153,7 @@ export function SearchPage() {
   const [savedScholarships, setSavedScholarships] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [defaultCourses, setDefaultCourses] = useState(['All Programs', 'BS Computer Science', 'BS Engineering', 'BS Biology', 'BS Physics', 'BS Mathematics']);
+  const [defaultCourses, setDefaultCourses] = useState(['All Programs', 'BSHM', 'BSCS', 'BSES', 'BSED MATH', 'BEED', 'BTLED HE']);
   const [newCourse, setNewCourse] = useState('');
   const [showAddCourse, setShowAddCourse] = useState(false);
   const [scholarships, setScholarships] = useState<any[]>([]);
@@ -170,7 +170,15 @@ export function SearchPage() {
       return;
     }
 
-    setUser(JSON.parse(storedUser));
+    const userData = JSON.parse(storedUser);
+    
+    // Redirect admins to admin dashboard
+    if (userData.role === 'admin') {
+      navigate('/admin/dashboard');
+      return;
+    }
+    
+    setUser(userData);
 
     // Check for search query from URL parameter or localStorage
     const urlQuery = searchParams.get('q');
@@ -283,9 +291,25 @@ export function SearchPage() {
     
     const matchesGWA = gwaRequirement >= gwaRange[0] && gwaRequirement <= gwaRange[1];
     const matchesType = selectedTypes.length === 0 || selectedTypes.includes(type);
-    const courses = eligReqs.courses || [];
+    const parseCourses = (courses: any): string[] => {
+      if (!courses) return [];
+      if (Array.isArray(courses)) return courses;
+      if (typeof courses === 'string' && courses.trim() === '') return [];
+      if (courses === 'All Programs') return ['All Programs'];
+      try {
+        const parsed = JSON.parse(courses);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    };
+    const courses = parseCourses(eligReqs.courses);
+    // Check if scholarship is eligible for selected courses
+    // If scholarship has no course requirements, it's available to all programs
     const matchesCourse = selectedCourses.length === 0 || 
                          selectedCourses.includes('All Programs') ||
+                         courses.length === 0 ||  // No specific course requirements
+                         courses.includes('All Programs') ||
                          courses.some((c: string) => selectedCourses.includes(c));
     
     // Debug logging - show why scholarships are filtered
@@ -294,7 +318,7 @@ export function SearchPage() {
         matchesSearch,
         matchesGWA: `${gwaRequirement} in range [${gwaRange[0]}-${gwaRange[1]}]`,
         matchesType: `${type} - selected: ${selectedTypes.length === 0 ? 'all' : selectedTypes}`,
-        matchesCourse: `eligible: ${courses} - selected: ${selectedCourses.length === 0 ? 'all' : selectedCourses}`,
+        matchesCourse: `eligible programs: ${courses.length === 0 ? 'All Programs' : courses.join(', ')} - selected filters: ${selectedCourses.length === 0 ? 'all' : selectedCourses.join(', ')}`,
         willInclude: matchesSearch && matchesGWA && matchesType && matchesCourse
       });
     }

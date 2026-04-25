@@ -43,6 +43,7 @@ interface Applicant {
 export function AdminDashboardPage() {
   const navigate = useNavigate();
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
+  const [applicantCounts, setApplicantCounts] = useState<{[key: number]: number}>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'deadline' | 'type'>('name');
@@ -82,7 +83,31 @@ export function AdminDashboardPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setScholarships(data.data || []);
+        const scholarshipsData = data.data || [];
+        setScholarships(scholarshipsData);
+        
+        // Fetch applicant counts for each scholarship
+        const counts: {[key: number]: number} = {};
+        for (const scholarship of scholarshipsData) {
+          try {
+            const countResponse = await fetch(
+              `http://localhost:5000/api/admin/scholarships/${scholarship.ScholarshipID}/applicants`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              }
+            );
+            if (countResponse.ok) {
+              const countData = await countResponse.json();
+              counts[scholarship.ScholarshipID] = (countData.data || []).length;
+            }
+          } catch (error) {
+            console.error(`Error fetching applicant count for scholarship ${scholarship.ScholarshipID}:`, error);
+            counts[scholarship.ScholarshipID] = 0;
+          }
+        }
+        setApplicantCounts(counts);
       } else {
         toast.error('Failed to load scholarships');
       }
@@ -273,6 +298,10 @@ export function AdminDashboardPage() {
                 <p className="text-sm text-[#64748B]">Available Slots</p>
                 <p className="font-semibold text-[#1A2E5A]">{selectedScholarship.Slots}</p>
               </div>
+              <div>
+                <p className="text-sm text-[#64748B]">Total Applicants</p>
+                <p className="font-semibold text-[#1A2E5A]">{applicants.length}</p>
+              </div>
             </div>
           </div>
 
@@ -462,7 +491,7 @@ export function AdminDashboardPage() {
                   onClick={() => handleSelectScholarship(scholarship)}
                 >
                   <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
                       <div>
                         <h3 className="font-semibold text-[#1A2E5A] line-clamp-2 hover:text-blue-600">
                           {scholarship.ScholarshipName}
@@ -482,6 +511,10 @@ export function AdminDashboardPage() {
                         <p className="font-medium text-[#1A2E5A]">
                           {scholarship.Deadline ? new Date(scholarship.Deadline).toLocaleDateString() : 'N/A'}
                         </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#64748B]">Applicants</p>
+                        <p className="font-medium text-[#1A2E5A]">{applicantCounts[scholarship.ScholarshipID] || 0}</p>
                       </div>
                       <div className="flex gap-2 justify-end">
                         <Button
