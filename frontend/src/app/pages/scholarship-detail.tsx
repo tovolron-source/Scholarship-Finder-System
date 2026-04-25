@@ -4,7 +4,6 @@ import { ArrowLeft, Heart, Share2, CheckCircle2, XCircle, AlertCircle, Calendar,
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Progress } from '../components/ui/progress';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '../components/ui/breadcrumb';
 import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
@@ -158,7 +157,7 @@ export function ScholarshipDetailPage() {
   const eligReq = parseEligibility(scholarship?.eligibilityRequirements || scholarship?.EligibilityRequirements);
   
   // GWA: 1.0 is best, 5.0 is worst. User's GWA must be <= (better or equal to) requirement
-  const meetsGWA = scholarship ? ((user?.gpa || user?.GPA || 5.0) <= (eligReq?.gwa ? parseFloat(eligReq.gwa) : 5.0)) : false;
+  const meetsGWA = scholarship ? ((user?.gwa || user?.GWA || 5.0) <= (eligReq?.gwa ? parseFloat(eligReq.gwa) : 5.0)) : false;
   const meetsCourse = !scholarship ? false : (!eligReq?.courses || eligReq.courses === '' || 
                       eligReq.courses.includes('All Programs') || 
                       eligReq.courses.includes(user?.course || user?.Course || ''));

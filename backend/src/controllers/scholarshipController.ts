@@ -216,8 +216,35 @@ export async function updateScholarship(req: Request, res: Response) {
     Object.keys(updateData).forEach(key => {
       if (updateData[key] !== undefined) {
         if (key === 'Benefits' || key === 'EligibilityRequirements' || key === 'ApplicationProcess') {
+          
+          let dataToSave = updateData[key];
+
+          // Handle EligibilityRequirements yearLevel cleanup
+          if (key === 'EligibilityRequirements' && dataToSave?.yearLevel) {
+            const yearLevels: string[] = dataToSave.yearLevel;
+
+            const hasSpecificYears = yearLevels.some(
+              (y: string) => y !== 'Any Year'
+            );
+
+            if (hasSpecificYears) {
+              // Remove "Any Year Level" if specific years are selected
+              dataToSave = {
+                ...dataToSave,
+                yearLevel: yearLevels.filter((y: string) => y !== 'Any Year')
+              };
+            } else if (yearLevels.length === 0) {
+              // If nothing is selected, keep it empty
+              dataToSave = {
+                ...dataToSave,
+                yearLevel: []
+              };
+            }
+          }
+
           updates.push(`${key} = ?`);
-          values.push(JSON.stringify(updateData[key]));
+          values.push(JSON.stringify(dataToSave));
+
         } else {
           updates.push(`${key} = ?`);
           values.push(updateData[key]);
