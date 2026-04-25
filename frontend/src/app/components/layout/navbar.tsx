@@ -54,8 +54,8 @@ export function Navbar() {
               <div className="w-12 h-12 bg-[#1A2E5A] rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-2xl">S</span>
               </div>
-              <span style={{ fontFamily: 'var(--font-heading)' }} className="text-xl text-[#F5A623]">
-                Scholarship Finder System
+              <span style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl text-[#F5A623]">
+                Scholarship Finder
               </span>
             </Link>
 
@@ -232,8 +232,8 @@ export function Navbar() {
           <div className="w-10 h-10 bg-[#1A2E5A] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">S</span>
           </div>
-          <span style={{ fontFamily: 'var(--font-heading)' }} className="text-base text-[#F5A623]">
-            Scholarship Finder System
+          <span style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl text-[#F5A623]">
+            Scholarship Finder
           </span>
         </Link>
         {user?.role !== 'admin' && (

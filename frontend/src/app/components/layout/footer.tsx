@@ -28,7 +28,7 @@ export function Footer() {
                 <span className="text-[#1A2E5A] font-bold text-2xl">S</span>
               </div>
               <span style={{ fontFamily: 'var(--font-heading)' }} className="text-2xl text-[#F5A623]">
-                Scholarship Finder System
+                Scholarship Finder
               </span>
             </div>
             <p className="text-sm text-gray-300">
@@ -140,7 +140,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-white/10 mt-8 pt-8 text-center text-sm text-gray-300">
-          <p>© 2026 Scholarship Finder System. All rights reserved.</p>
+          <p>© 2026 Scholarship Finder. All rights reserved.</p>
         </div>
       </div>
     </footer>

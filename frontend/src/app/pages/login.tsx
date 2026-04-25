@@ -175,8 +175,8 @@ export function LoginPage() {
             <div className="w-14 h-14 bg-[#F5A623] rounded-lg flex items-center justify-center">
               <span className="text-[#1A2E5A] font-bold text-3xl">S</span>
             </div>
-            <span style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl text-[#F5A623]">
-              Scholarship Finder System
+            <span style={{ fontFamily: 'var(--font-heading)' }} className="text-5xl text-[#F5A623]">
+              Scholarship Finder
             </span>
           </Link>
 
@@ -221,8 +221,8 @@ export function LoginPage() {
                 <div className="w-10 h-10 bg-[#1A2E5A] rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xl">S</span>
                 </div>
-                <span style={{ fontFamily: 'var(--font-heading)' }} className="text-lg text-[#1A2E5A]">
-                  Scholarship Finder System
+                <span style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl text-[#1A2E5A]">
+                  Scholarship Finder
                 </span>
               </Link>
               <h2 style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl text-[#1A2E5A] mb-2">
