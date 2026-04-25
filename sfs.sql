@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 22, 2026 at 12:58 PM
+-- Generation Time: Apr 23, 2026 at 02:39 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -45,7 +45,7 @@ CREATE TABLE `application` (
 --
 
 INSERT INTO `application` (`ApplicationID`, `StudentID`, `ScholarshipID`, `Status`, `PersonalStatement`, `TranscriptPath`, `IDDocumentPath`, `RecommendationPath`, `DateApplied`, `LastUpdated`) VALUES
-(1, 5, 1, 'Pending', 'POST http://localhost:5000/api/notifications/generate/deadlines\nPOST http://localhost:5000/api/notifications/generate/statusPOST http://localhost:5000/api/notifications/generate/deadlines\nPOST http://localhost:5000/api/notifications/generate/status', NULL, NULL, NULL, '2026-04-22 10:11:41', '2026-04-22 10:11:41');
+(1, 5, 1, 'Approved', 'POST http://localhost:5000/api/notifications/generate/deadlines\nPOST http://localhost:5000/api/notifications/generate/statusPOST http://localhost:5000/api/notifications/generate/deadlines\nPOST http://localhost:5000/api/notifications/generate/status', NULL, NULL, NULL, '2026-04-22 10:11:41', '2026-04-23 11:58:08');
 
 -- --------------------------------------------------------
 
@@ -68,7 +68,9 @@ INSERT INTO `favorite` (`FavoriteID`, `StudentID`, `ScholarshipID`, `CreatedAt`)
 (7, 7, 1, '2026-04-17 11:42:45'),
 (8, 7, 5, '2026-04-17 11:42:46'),
 (9, 7, 6, '2026-04-17 11:42:47'),
-(10, 7, 4, '2026-04-17 11:42:57');
+(10, 7, 4, '2026-04-17 11:42:57'),
+(13, 5, 7, '2026-04-23 10:20:31'),
+(18, 5, 2, '2026-04-23 12:18:45');
 
 -- --------------------------------------------------------
 
@@ -88,6 +90,13 @@ CREATE TABLE `notification` (
   `CreatedAt` timestamp NOT NULL DEFAULT current_timestamp(),
   `UpdatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `notification`
+--
+
+INSERT INTO `notification` (`NotificationID`, `StudentID`, `Type`, `Title`, `Message`, `ScholarshipID`, `ApplicationID`, `IsRead`, `CreatedAt`, `UpdatedAt`) VALUES
+(1, 5, 'status', 'Application Approved!', 'Congratulations! Your application for DOST Science & Technology Scholarship has been approved. You will be contacted with further instructions.', 1, 1, 1, '2026-04-23 11:58:08', '2026-04-23 11:59:23');
 
 -- --------------------------------------------------------
 
@@ -126,7 +135,8 @@ INSERT INTO `scholarship` (`ScholarshipID`, `ScholarshipName`, `Provider`, `Type
 (4, 'Future Engineers Scholarship', 'Engineering Society of America', 'Merit', 'Supporting the next generation of engineers through financial assistance and professional development.', '[\"Annual grant of $4,500\", \"Conference attendance sponsorship\", \"Professional networking events\"]', '$4,500', 30, 3.20, '2026-06-01', 'Online Application', 'https://forms.google.com/future-engineers', 'scholarships@esa.org', '{\"gwa\": 3.2, \"courses\": [\"BS Engineering\", \"BS Computer Engineering\", \"BS Electrical Engineering\"], \"yearLevel\": [\"2nd Year\", \"3rd Year\", \"4th Year\"]}', '[\"Fill out application form\", \"Submit project portfolio\", \"Provide faculty recommendation\"]', '2026-04-11 10:09:39', '2026-04-20 11:20:31'),
 (5, 'Community Champions Grant', 'National Youth Foundation', 'Need-based', 'Financial support for students who demonstrate commitment to community service and leadership.', '[\"$2,500 annual grant\", \"Leadership training workshops\", \"Community project funding\"]', '$2,500', 75, 2.50, '2026-04-15', 'Online Application', 'https://forms.google.com/community-champions', 'grants@nyf.org', '{\"gwa\": 2.5, \"courses\": [\"All Programs\"], \"yearLevel\": [\"1st Year\", \"2nd Year\", \"3rd Year\", \"4th Year\"], \"financialStatus\": [\"Low Income\"]}', '[\"Complete application form\", \"Submit community service documentation\", \"Write essay on leadership experience\"]', '2026-04-11 10:09:39', '2026-04-20 11:20:57'),
 (6, 'Women in STEM Scholarship', 'Tech Women Network', 'Merit', 'Empowering women pursuing careers in science, technology, engineering, and mathematics.', '[\"Annual scholarship of $6,000\", \"Mentorship program\", \"Industry networking events\", \"Career development workshops\"]', '$6,000', 25, 3.30, '2026-05-30', 'Online Application', 'https://forms.google.com/women-stem', 'scholarships@techwomen.org', '{\"gwa\": 3.3, \"courses\": [\"BS Computer Science\", \"BS Engineering\", \"BS Mathematics\", \"BS Physics\"], \"yearLevel\": [\"1st Year\", \"2nd Year\", \"3rd Year\", \"4th Year\"]}', '[\"Online application submission\", \"Personal statement on STEM goals\", \"Faculty recommendation letter\"]', '2026-04-11 10:09:39', '2026-04-20 11:21:16'),
-(7, 'JUAN scholarship', 'Juan', 'Merit', 'juan provides scholarships', '[\"Full tuition coverage\",\"Monthly allowance\"]', '$2,500', 1, 3.00, '2026-04-25', 'University Portal', 'https://forms.google.com/juanaward', 'juan@scholarship.com', '{\"gwa\":\"3.0\",\"courses\":[\"All Programs\"],\"yearLevel\":[\"2nd Year\",\"3rd Year\",\"4th Year\"]}', '[\"Submit application form\",\"Submit proof of enrollment\"]', '2026-04-22 10:38:14', '2026-04-22 10:38:14');
+(7, 'JUAN scholarship', 'Juan', 'Merit', 'juan provides scholarships', '[\"Full tuition coverage\"]', '₱2,500', 1, 3.00, '2026-04-23', 'University Portal', 'https://forms.google.com/juanaward', 'juan@scholarship.com', '{\"gwa\":\"3.0\",\"courses\":\"All Programs\",\"yearLevel\":\"Any Year\"}', '[\"Submit application form\",\"Submit proof of enrollment\"]', '2026-04-22 10:38:14', '2026-04-23 10:27:13'),
+(8, 'Spongebob Scholarships', 'BIKINI BOTTOM INDUSTRIES', 'Merit', 'Spongebob\'s Scholarships', '[]', '$5,000/year', 5, 1.30, '2026-05-08', NULL, NULL, 'bikini@scholarship.com', '{\"gwa\":\"1.3\",\"courses\":\"All Programs\",\"yearLevel\":[\"1st Year\"]}', '[]', '2026-04-23 12:03:25', '2026-04-23 12:03:25');
 
 -- --------------------------------------------------------
 
@@ -157,7 +167,7 @@ CREATE TABLE `student_profile` (
 --
 
 INSERT INTO `student_profile` (`id`, `userId`, `fullName`, `gender`, `address`, `school`, `course`, `yearLevel`, `gwa`, `financialStatus`, `contactNumber`, `createdAt`, `updatedAt`, `profilePhoto`, `profileCompletion`) VALUES
-(2, 5, 'TOVOLRON', 'Male', '123, Pineapple Street, BIkini Bottom', 'Earth State University', 'BS BIAS', '4th Year', 2.53, 'High Income', '09123456789', '2026-04-05 15:19:52', '2026-04-20 10:58:46', '/uploads/profile-1775404125872-525757832.jpg', 100),
+(2, 5, 'TOVOLRON', 'Male', '123, Pineapple Street, BIkini Bottom', 'Earth State University', 'BS BIAS', '4th Year', 2.60, 'High Income', '09123456789', '2026-04-05 15:19:52', '2026-04-23 11:15:11', '/uploads/profile-1775404125872-525757832.jpg', 100),
 (4, 7, 'VJ ABJELINA', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-10 11:06:06', '2026-04-10 11:06:06', NULL, 20),
 (6, 9, '12 34', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-04-21 12:23:24', '2026-04-21 12:23:24', NULL, 20);
 
@@ -248,25 +258,25 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `application`
 --
 ALTER TABLE `application`
-  MODIFY `ApplicationID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `ApplicationID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `favorite`
 --
 ALTER TABLE `favorite`
-  MODIFY `FavoriteID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `FavoriteID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `notification`
 --
 ALTER TABLE `notification`
-  MODIFY `NotificationID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `NotificationID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `scholarship`
 --
 ALTER TABLE `scholarship`
-  MODIFY `ScholarshipID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `ScholarshipID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `student_profile`
