@@ -35,16 +35,6 @@ async function initializeTables() {
 
     console.log('✅ Users table ready');
 
-    // Add role column if it doesn't exist (for existing databases)
-    try {
-      await connection.query(`
-        ALTER TABLE user ADD COLUMN role ENUM('admin', 'student') DEFAULT 'student'
-      `);
-      console.log('✅ Added role column to user table');
-    } catch (e) {
-      // Column might already exist, ignore error
-    }
-
     // Create student_profile table if it doesn't exist
     await connection.query(`
       CREATE TABLE IF NOT EXISTS student_profile (
@@ -66,13 +56,6 @@ async function initializeTables() {
         FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
       )
     `);
-
-    // Attempt to rename gpa column to gwa if it exists (for existing databases)
-    try {
-      await connection.query(`ALTER TABLE student_profile CHANGE COLUMN gpa gwa DECIMAL(3,2)`);
-    } catch (e) {
-      // Column might not exist or might already be renamed, ignore error
-    }
 
     console.log('✅ Student Profile table ready');
 

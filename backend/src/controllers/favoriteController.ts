@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../config/database';
+import { PoolConnection } from 'mysql2/promise';
 
 // Get all favorites for a student
 export async function getFavoritesByStudent(req: Request, res: Response) {
@@ -58,7 +59,7 @@ export async function getFavoritesByStudent(req: Request, res: Response) {
 
 // Check if a scholarship is favorited by a student
 export async function checkIsFavorited(req: Request, res: Response) {
-  let connection;
+  let connection: PoolConnection;
   try {
     const { userId: userIdParam, scholarshipId: scholarshipIdParam } = req.query;
 

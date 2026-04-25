@@ -196,7 +196,7 @@ export async function updateScholarship(req: Request, res: Response) {
       if (isNaN(gwaValue) || gwaValue < 1.0 || gwaValue > 5.0) {
         return res.status(400).json({
           success: false,
-          message: 'GWA must be between 1.0 (best) and 5.0 (worst)'
+          message: 'GWA must be between 1.0 and 5.0'
         });
       }
     }

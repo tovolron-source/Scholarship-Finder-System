@@ -7,6 +7,7 @@ exports.createScholarship = createScholarship;
 exports.updateScholarship = updateScholarship;
 exports.deleteScholarship = deleteScholarship;
 const database_1 = __importDefault(require("../config/database"));
+
 // Admin: Create new scholarship
 async function createScholarship(req, res) {
     try {
