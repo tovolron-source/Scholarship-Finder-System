@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Edit, Trash2, Plus, Search, ArrowUpDown, LogOut, X, ChevronLeft, Check } from 'lucide-react';
 import { Button } from '../../components/ui/button';
+
+const API_URL = import.meta.env.VITE_API_URL;
 import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
@@ -75,7 +77,7 @@ export function AdminDashboardPage() {
   const fetchScholarships = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/scholarships', {
+      const response = await fetch(`${API_URL}/api/scholarships`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -91,7 +93,7 @@ export function AdminDashboardPage() {
         for (const scholarship of scholarshipsData) {
           try {
             const countResponse = await fetch(
-              `http://localhost:5000/api/admin/scholarships/${scholarship.ScholarshipID}/applicants`,
+              `${API_URL}/api/admin/scholarships/${scholarship.ScholarshipID}/applicants`,
               {
                 headers: {
                   'Authorization': `Bearer ${token}`
@@ -122,7 +124,7 @@ export function AdminDashboardPage() {
   const handleDelete = async (id: number) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/scholarships/${id}`, {
+      const response = await fetch(`${API_URL}/api/admin/scholarships/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -146,7 +148,7 @@ export function AdminDashboardPage() {
     setLoadingApplicants(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/scholarships/${scholarshipId}/applicants`, {
+      const response = await fetch(`${API_URL}/api/admin/scholarships/${scholarshipId}/applicants`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -175,7 +177,7 @@ export function AdminDashboardPage() {
     setApprovingId(applicationId);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/approve`, {
+      const response = await fetch(`${API_URL}/api/applications/${applicationId}/approve`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -201,7 +203,7 @@ export function AdminDashboardPage() {
     setApprovingId(applicationId);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/reject`, {
+      const response = await fetch(`${API_URL}/api/applications/${applicationId}/reject`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

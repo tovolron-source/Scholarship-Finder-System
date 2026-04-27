@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Eye, X, FileText, Calendar, Building2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
+
+const API_URL = import.meta.env.VITE_API_URL;
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent } from '../components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
@@ -29,7 +31,7 @@ export function ApplicationsPage() {
 
       const userData = JSON.parse(user);
 
-      const response = await fetch(`http://localhost:5000/api/applications/student/${userData.id}`, {
+      const response = await fetch(`${API_URL}/api/applications/student/${userData.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -71,7 +73,7 @@ export function ApplicationsPage() {
 
       const userData = JSON.parse(user);
 
-      const response = await fetch(`http://localhost:5000/api/applications/${id}/withdraw`, {
+      const response = await fetch(`${API_URL}/api/applications/${id}/withdraw`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

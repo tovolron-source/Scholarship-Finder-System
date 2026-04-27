@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Upload, FileText, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
+
+const API_URL = import.meta.env.VITE_API_URL;
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
@@ -34,7 +36,7 @@ export function ApplyPage() {
     const fetchScholarship = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/scholarships/${id}`);
+        const response = await fetch(`${API_URL}/api/scholarships/${id}`);
         if (response.ok) {
           const data = await response.json();
           setScholarship(data.data);
@@ -116,7 +118,7 @@ export function ApplyPage() {
       */
      
      // Send as JSON since document uploads are disabled on the backend for now
-      const response = await fetch('http://localhost:5000/api/applications', {
+      const response = await fetch(`${API_URL}/api/applications`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

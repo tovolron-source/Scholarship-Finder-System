@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { Save, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
+
+const API_URL = import.meta.env.VITE_API_URL;
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
@@ -63,7 +65,7 @@ export function CreateScholarshipPage() {
   const fetchScholarship = async (scholarshipId: number) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/scholarships/${scholarshipId}`, {
+      const response = await fetch(`${API_URL}/api/scholarships/${scholarshipId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -167,8 +169,8 @@ export function CreateScholarshipPage() {
     try {
       const token = localStorage.getItem('token');
       const url = isEdit
-        ? `http://localhost:5000/api/admin/scholarships/${id}`
-        : 'http://localhost:5000/api/admin/scholarships';
+        ? `${API_URL}/api/admin/scholarships/${id}`
+        : `${API_URL}/api/admin/scholarships`;
 
       const method = isEdit ? 'PUT' : 'POST';
 

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Eye, EyeOff, Save, LogOut, ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
+
+const API_URL = import.meta.env.VITE_API_URL;
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
@@ -64,7 +66,7 @@ export function AdminAccountSettingsPage() {
     setIsSaving(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/change-email/${userData.id}`, {
+      const response = await fetch(`${API_URL}/api/admin/change-email/${userData.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +118,7 @@ export function AdminAccountSettingsPage() {
     setIsSaving(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/change-password/${userData.id}`, {
+      const response = await fetch(`${API_URL}/api/admin/change-password/${userData.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
