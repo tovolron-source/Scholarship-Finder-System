@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Edit, Trash2, Plus, Search, ArrowUpDown, LogOut, X, ChevronLeft, Check } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-
-const API_URL = import.meta.env.VITE_API_URL;
 import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
@@ -19,6 +17,8 @@ import {
   AlertDialogTitle,
 } from '../../components/ui/alert-dialog';
 import { toast } from 'sonner';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Scholarship {
   ScholarshipID: number;
@@ -77,14 +77,18 @@ export function AdminDashboardPage() {
   const fetchScholarships = async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log('Fetching scholarships from:', `${API_URL}/api/scholarships`);
       const response = await fetch(`${API_URL}/api/scholarships`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
+      console.log('Scholarship fetch response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Scholarships received:', data);
         const scholarshipsData = data.data || [];
         setScholarships(scholarshipsData);
         
@@ -111,7 +115,9 @@ export function AdminDashboardPage() {
         }
         setApplicantCounts(counts);
       } else {
-        toast.error('Failed to load scholarships');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to load scholarships. Status:', response.status, 'Error:', errorData);
+        toast.error(`Failed to load scholarships: ${errorData.message || response.statusText}`);
       }
     } catch (error) {
       console.error('Error fetching scholarships:', error);
