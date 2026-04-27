@@ -133,16 +133,19 @@ export function AdminDashboardPage() {
       const response = await fetch(`${API_URL}/api/admin/scholarships/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         toast.success('Scholarship deleted successfully');
         fetchScholarships();
         setDeleteId(null);
       } else {
-        toast.error('Failed to delete scholarship');
+        toast.error(data.message || 'Failed to delete scholarship');
       }
     } catch (error) {
       console.error('Error deleting scholarship:', error);
