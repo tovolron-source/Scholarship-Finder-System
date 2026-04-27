@@ -241,7 +241,7 @@ export async function deleteScholarship(req: Request, res: Response) {
 
     // Also delete related favorites
     await connection.query(
-      'DELETE FROM favorites WHERE ScholarshipID = ?',
+      'DELETE FROM favorite WHERE ScholarshipID = ?',
       [id]
     );
 
