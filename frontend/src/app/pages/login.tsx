@@ -21,6 +21,7 @@ export function LoginPage() {
   });
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
+    console.log('API_URL:', import.meta.env.VITE_API_URL);
     try {
       const response = await fetch(`${API_URL}/api/auth/google`, {
         method: 'POST',
@@ -67,7 +68,7 @@ export function LoginPage() {
     } catch (error) {
       console.error('Google sign-in error:', error);
       toast.error('Google Sign-In failed', {
-        description: 'Could not connect to server. Make sure backend is running on ${API_URL}',
+        description: 'Could not connect to server. Make sure backend is running on http://localhost:5000',
       });
     }
   };
