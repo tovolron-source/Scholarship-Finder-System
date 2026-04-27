@@ -14,6 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { toast } from 'sonner';
 import { throttle } from '../lib/debounce';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export function ProfilePage() {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -52,7 +54,7 @@ export function ProfilePage() {
         const user = JSON.parse(storedUser);
         const userId = user.id;
 
-        const response = await fetch(`http://localhost:5000/api/auth/user/${userId}`, {
+        const response = await fetch(`${API_URL}/api/auth/user/${userId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -65,7 +67,7 @@ export function ProfilePage() {
               id: data.user.id?.toString() || user.id?.toString() || '1',
               fullName: data.user.FullName || data.user.Name || user.FullName || user.Name || 'Your Name',
               email: data.user.Email || user.Email || 'your.email@example.com',
-              profilePhoto: data.user.profilePhoto ? `http://localhost:5000${data.user.profilePhoto}` : user.ProfilePhoto || undefined,
+              profilePhoto: data.user.profilePhoto ? `${API_URL}${data.user.profilePhoto}` : user.ProfilePhoto || undefined,
               gender: data.user.gender ?? user.gender ?? user.Gender ?? '',
               address: data.user.address ?? user.address ?? user.Address ?? '',
               contactNumber: data.user.contactNumber ?? user.contactNumber ?? user.ContactNumber ?? '',
@@ -108,7 +110,7 @@ export function ProfilePage() {
       const formData = new FormData();
       formData.append('profilePhoto', selectedFile);
 
-      const response = await fetch(`http://localhost:5000/api/auth/upload-profile-photo/${userId}`, {
+      const response = await fetch(`${API_URL}/api/auth/upload-profile-photo/${userId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -121,13 +123,13 @@ export function ProfilePage() {
         if (data.success) {
           setUserData((prev: any) => ({
             ...prev,
-            profilePhoto: `http://localhost:5000${data.profilePhoto}`
+            profilePhoto: `${API_URL}${data.profilePhoto}`
           }));
 
           const updatedUser = {
             ...user,
-            ProfilePhoto: `http://localhost:5000${data.profilePhoto}`,
-            profilePhoto: `http://localhost:5000${data.profilePhoto}`
+            ProfilePhoto: `${API_URL}${data.profilePhoto}`,
+            profilePhoto: `${API_URL}${data.profilePhoto}`
           };
           localStorage.setItem('user', JSON.stringify(updatedUser));
 
@@ -185,9 +187,9 @@ export function ProfilePage() {
       const user = JSON.parse(storedUser);
       const userId = user.id;
 
-      const profilePhotoPath = userData.profilePhoto?.replace('http://localhost:5000', '');
+      const profilePhotoPath = userData.profilePhoto?.replace('${API_URL}', '');
 
-      const response = await fetch(`http://localhost:5000/api/auth/user/${userId}`, {
+      const response = await fetch(`${API_URL}/api/auth/user/${userId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -212,7 +214,7 @@ export function ProfilePage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.user) {
-          const remoteProfilePhoto = data.user.profilePhoto ? `http://localhost:5000${data.user.profilePhoto}` : userData.profilePhoto;
+          const remoteProfilePhoto = data.user.profilePhoto ? `${API_URL}${data.user.profilePhoto}` : userData.profilePhoto;
           const updatedUser = {
             ...user,
             fullName: data.user.fullName || userData.fullName,

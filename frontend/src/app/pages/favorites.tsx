@@ -9,6 +9,8 @@ import { Footer } from '../components/layout/footer';
 import { toast } from 'sonner';
 import { scholarshipMapper } from '../lib/scholarshipMapper';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export function FavoritesPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -32,7 +34,7 @@ export function FavoritesPage() {
       try {
         setLoading(true);
         const response = await fetch(
-          `http://localhost:5000/api/favorites/student?userId=${parsedUser.id}`
+          `${API_URL}/api/favorites/student?userId=${parsedUser.id}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -55,7 +57,7 @@ export function FavoritesPage() {
     if (!user?.id) return;
 
     try {
-      const response = await fetch('http://localhost:5000/api/favorites', {
+      const response = await fetch(`${API_URL}/api/favorites`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

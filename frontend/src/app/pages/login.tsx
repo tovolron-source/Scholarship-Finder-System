@@ -9,6 +9,8 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent } from '../components/ui/card';
 import { handleRedirectWithSearchQuery } from '../lib/redirectWithSearchQuery';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +22,7 @@ export function LoginPage() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/google', {
+      const response = await fetch(`${API_URL}/api/auth/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,7 +67,7 @@ export function LoginPage() {
     } catch (error) {
       console.error('Google sign-in error:', error);
       toast.error('Google Sign-In failed', {
-        description: 'Could not connect to server. Make sure backend is running on http://localhost:5000',
+        description: 'Could not connect to server. Make sure backend is running on ${API_URL}',
       });
     }
   };
@@ -107,7 +109,7 @@ export function LoginPage() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +156,7 @@ export function LoginPage() {
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Login failed', {
-        description: 'Could not connect to server. Make sure backend is running on http://localhost:5000',
+        description: `Could not connect to server. Make sure backend is running on ${API_URL}`,
         action: {
           label: 'Close',
           onClick: () => {},

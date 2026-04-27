@@ -8,6 +8,8 @@ import { Badge } from '../components/ui/badge';
 import { Footer } from '../components/layout/footer';
 import { scholarshipMapper } from '../lib/scholarshipMapper';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export function LandingPage() {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState('');
@@ -30,7 +32,7 @@ export function LandingPage() {
     // Fetch all scholarships from API
     const fetchScholarships = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/scholarships');
+        const response = await fetch(`${API_URL}/api/scholarships`);
         if (response.ok) {
           const data = await response.json();
           const allScholarships = data.data || [];

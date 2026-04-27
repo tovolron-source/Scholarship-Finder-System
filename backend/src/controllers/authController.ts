@@ -5,7 +5,7 @@ import { OAuth2Client } from 'google-auth-library';
 import pool from '../config/database';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
-const GOOGLE_CLIENT_ID = '322543435047-avhj92akciptrms4sd6sqju7ipr75ru8.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export const getUserById = async (req: Request, res: Response): Promise<void> => {

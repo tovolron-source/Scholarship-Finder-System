@@ -11,6 +11,8 @@ import { Card, CardContent } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
 import { handleRedirectWithSearchQuery } from '../lib/redirectWithSearchQuery';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export function RegisterPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -26,7 +28,7 @@ export function RegisterPage() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/google', {
+      const response = await fetch('${API_URL}/api/auth/google', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,7 +67,7 @@ export function RegisterPage() {
     } catch (error) {
       console.error('Google sign-up error:', error);
       toast.error('Google Sign-Up failed', {
-        description: 'Could not connect to server. Make sure backend is running on http://localhost:5000',
+        description: 'Could not connect to server. Make sure backend is running on ${API_URL}',
       });
     }
   };
@@ -136,7 +138,7 @@ export function RegisterPage() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch('${API_URL}/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -189,7 +191,7 @@ export function RegisterPage() {
     } catch (error) {
       console.error('❌ Registration error:', error);
       toast.error('Registration failed', {
-        description: 'Could not connect to server. Make sure backend is running on http://localhost:5000',
+        description: `Could not connect to server. Make sure backend is running on ${API_URL}`,
         action: {
           label: 'Close',
           onClick: () => {},

@@ -13,6 +13,8 @@ import { Footer } from '../components/layout/footer';
 import { toast } from 'sonner';
 import { scholarshipMapper } from '../lib/scholarshipMapper';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 // FilterSection Component - Memoized to prevent re-renders causing focus loss
 const FilterSection = memo(({
   scholarshipTypes,
@@ -198,7 +200,7 @@ export function SearchPage() {
     const fetchScholarships = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/scholarships');
+        const response = await fetch('${API_URL}/api/scholarships');
         if (response.ok) {
           const data = await response.json();
           console.log('📚 All scholarships from API:', data.data?.length, 'scholarships');
@@ -227,7 +229,7 @@ export function SearchPage() {
     const fetchFavorites = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/favorites/student?userId=${user.id}`
+          `${API_URL}/api/favorites/student?userId=${user.id}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -333,7 +335,7 @@ export function SearchPage() {
     }
 
     const isCurrentlySaved = savedScholarships.includes(scholarshipId);
-    const endpoint = 'http://localhost:5000/api/favorites';
+    const endpoint = '${API_URL}/api/favorites';
 
     try {
       const response = await fetch(endpoint, {

@@ -9,6 +9,8 @@ import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
 import { toast } from 'sonner';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export function ScholarshipDetailPage() {
   const { id } = useParams();
   const [scholarship, setScholarship] = useState<any>(null);
@@ -30,7 +32,7 @@ export function ScholarshipDetailPage() {
       try {
         setLoading(true);
         // Fetch from API
-        const response = await fetch(`http://localhost:5000/api/scholarships/${id}`);
+        const response = await fetch(`${API_URL}/api/scholarships/${id}`);
         if (response.ok) {
           const data = await response.json();
           setScholarship(data.data);
@@ -59,7 +61,7 @@ export function ScholarshipDetailPage() {
     const checkIfSaved = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/favorites/check?userId=${user.id}&scholarshipId=${id}`
+          `${API_URL}/api/favorites/check?userId=${user.id}&scholarshipId=${id}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -115,7 +117,7 @@ export function ScholarshipDetailPage() {
       return;
     }
 
-    const endpoint = 'http://localhost:5000/api/favorites';
+    const endpoint = '${API_URL}/api/favorites';
 
     try {
       const response = await fetch(endpoint, {

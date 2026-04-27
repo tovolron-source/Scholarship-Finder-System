@@ -7,6 +7,8 @@ import { Navbar } from '../components/layout/navbar';
 import { Footer } from '../components/layout/footer';
 import { toast } from 'sonner';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface Notification {
   NotificationID?: string;
   id?: string;
@@ -48,7 +50,7 @@ export function NotificationsPage() {
       console.log(`📬 Fetching notifications for user: ${userData.id}`);
 
       // Fetch notifications from database
-      const response = await fetch(`http://localhost:5000/api/notifications/student/${userData.id}`, {
+      const response = await fetch(`${API_URL}/api/notifications/student/${userData.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -104,7 +106,7 @@ export function NotificationsPage() {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
+      const response = await fetch(`${API_URL}/api/notifications/${notificationId}/read`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -125,7 +127,7 @@ export function NotificationsPage() {
     try {
       const token = localStorage.getItem('token');
       if (notificationId) {
-        await fetch(`http://localhost:5000/api/notifications/${notificationId}`, {
+        await fetch(`${API_URL}/api/notifications/${notificationId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -148,7 +150,7 @@ export function NotificationsPage() {
       if (!user || !token) return;
       
       const userData = JSON.parse(user);
-      const response = await fetch('http://localhost:5000/api/notifications/mark-all-read', {
+      const response = await fetch('${API_URL}/api/notifications/mark-all-read', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
