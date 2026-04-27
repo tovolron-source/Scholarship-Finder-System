@@ -80,7 +80,8 @@ export function AdminDashboardPage() {
       console.log('Fetching scholarships from:', `${API_URL}/api/scholarships`);
       const response = await fetch(`${API_URL}/api/scholarships`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
         }
       });
 
@@ -100,7 +101,8 @@ export function AdminDashboardPage() {
               `${API_URL}/api/admin/scholarships/${scholarship.ScholarshipID}/applicants`,
               {
                 headers: {
-                  'Authorization': `Bearer ${token}`
+                  'Authorization': `Bearer ${token}`,
+                  'Cache-Control': 'no-cache'
                 }
               }
             );
@@ -130,6 +132,8 @@ export function AdminDashboardPage() {
   const handleDelete = async (id: number) => {
     try {
       const token = localStorage.getItem('token');
+      console.log('Attempting to delete scholarship:', id);
+      
       const response = await fetch(`${API_URL}/api/admin/scholarships/${id}`, {
         method: 'DELETE',
         headers: {
@@ -138,13 +142,21 @@ export function AdminDashboardPage() {
         }
       });
 
+      console.log('Delete response status:', response.status);
+      
       const data = await response.json();
+      console.log('Delete response data:', data);
 
-      if (response.ok && data.success) {
+      if (response.ok) {
         toast.success('Scholarship deleted successfully');
-        fetchScholarships();
         setDeleteId(null);
+        
+        // Small delay to ensure backend has processed the deletion
+        setTimeout(() => {
+          fetchScholarships();
+        }, 300);
       } else {
+        console.error('Delete failed with status:', response.status, 'Message:', data.message);
         toast.error(data.message || 'Failed to delete scholarship');
       }
     } catch (error) {
