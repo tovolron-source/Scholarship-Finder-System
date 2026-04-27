@@ -200,7 +200,7 @@ export function SearchPage() {
     const fetchScholarships = async () => {
       try {
         setLoading(true);
-        const response = await fetch('${API_URL}/api/scholarships');
+        const response = await fetch(`${API_URL}/api/scholarships`);
         if (response.ok) {
           const data = await response.json();
           console.log('📚 All scholarships from API:', data.data?.length, 'scholarships');
