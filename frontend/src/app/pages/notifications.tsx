@@ -150,7 +150,7 @@ export function NotificationsPage() {
       if (!user || !token) return;
       
       const userData = JSON.parse(user);
-      const response = await fetch('${API_URL}/api/notifications/mark-all-read', {
+      const response = await fetch(`${API_URL}/api/notifications/mark-all-read`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

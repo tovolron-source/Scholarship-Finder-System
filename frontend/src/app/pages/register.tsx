@@ -28,7 +28,7 @@ export function RegisterPage() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      const response = await fetch('${API_URL}/api/auth/google', {
+      const response = await fetch(`${API_URL}/api/auth/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ export function RegisterPage() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('${API_URL}/api/auth/register', {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

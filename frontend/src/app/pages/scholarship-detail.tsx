@@ -117,7 +117,7 @@ export function ScholarshipDetailPage() {
       return;
     }
 
-    const endpoint = '${API_URL}/api/favorites';
+    const endpoint = `${API_URL}/api/favorites`;
 
     try {
       const response = await fetch(endpoint, {
