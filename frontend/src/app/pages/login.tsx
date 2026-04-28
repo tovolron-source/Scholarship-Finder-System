@@ -178,7 +178,7 @@ export function LoginPage() {
             <div className="w-14 h-14 bg-[#F5A623] rounded-lg flex items-center justify-center">
               <span className="text-[#1A2E5A] font-bold text-3xl">S</span>
             </div>
-            <span style={{ fontFamily: 'var(--font-heading)' }} className="text-4xl text-[#F5A623]">
+            <span style={{ fontFamily: 'var(--font-heading)' }} className="text-3xl text-[#F5A623]">
               Scholarship Finder
             </span>
           </Link>
